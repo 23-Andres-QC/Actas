@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(cd \"/c/Users/andre/OneDrive/Documentos/Ciclo08/Robotica/Actas\" && ls -a | grep gitignore; cat .gitignore 2>/dev/null)",
+      "Read(//c/c/Users/andre/OneDrive/Documentos/Ciclo08/Robotica/**)",
+      "Bash(cd \"/c/Users/andre/OneDrive/Documentos/Ciclo08/Robotica/Actas/actas_fronted\" && rm -f tsconfig.tsbuildinfo)",
+      "Bash(docker --version)",
+      "Bash(docker compose *)"
+    ],
+    "additionalDirectories": [
+      "c:\\c\\Users\\andre\\OneDrive\\Documentos\\Ciclo08\\Robotica\\Actas\\actas_fronted"
+    ]
+  }
+}

@@ -1,0 +1,7 @@
+import { Acuerdo } from './acuerdo.entity';
+
+export interface AcuerdoRepository {
+  findById(id: string): Promise<Acuerdo | null>;
+  findByActaId(actaId: string): Promise<Acuerdo[]>;
+  save(acuerdo: Acuerdo): Promise<void>;
+}

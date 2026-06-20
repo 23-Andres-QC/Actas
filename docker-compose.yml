@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: actas
+      POSTGRES_PASSWORD: actas
+      POSTGRES_DB: actas
+    volumes:
+      - actas_db_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432" # 5432 ya está ocupado por un Postgres nativo de Windows en esta máquina
+    networks:
+      - actas_internal
+
+  backend:
+    build: ./actas_backend
+    restart: unless-stopped
+    env_file:
+      - ./actas_backend/.env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://actas:actas@db:5432/actas
+    depends_on:
+      - db
+    ports:
+      - "4000:4000"
+    networks:
+      - actas_internal
+
+  web:
+    build: ./actas_fronted
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    networks:
+      - actas_internal
+
+networks:
+  actas_internal:
+    driver: bridge
+
+volumes:
+  actas_db_data:
