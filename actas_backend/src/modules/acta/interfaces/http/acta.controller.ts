@@ -3,8 +3,11 @@ import { CrearActaUseCase } from '../../application/use-cases/crear-acta.use-cas
 import { ListarActasUseCase } from '../../application/use-cases/listar-actas.use-case';
 import { ObtenerActaUseCase } from '../../application/use-cases/obtener-acta.use-case';
 import { CalcularAvanceUseCase } from '../../application/use-cases/calcular-avance.use-case';
+import { ListarAcuerdosPorActaUseCase } from '../../../acuerdo/application/use-cases/listar-acuerdos-por-acta.use-case';
+import { SubirActaFisicaUseCase } from '../../application/use-cases/subir-acta-fisica.use-case';
 import { crearActaSchema, listarActasQuerySchema } from './acta.validators';
-import { UnauthorizedError } from '../../../../shared/errors/domain-error';
+import { UnauthorizedError, ValidationError } from '../../../../shared/errors/domain-error';
+import { buildActaWordBuffer } from '../../infrastructure/acta-word.builder';
 
 export class ActaController {
   constructor(
@@ -12,6 +15,8 @@ export class ActaController {
     private readonly listarActas: ListarActasUseCase,
     private readonly obtenerActa: ObtenerActaUseCase,
     private readonly calcularAvance: CalcularAvanceUseCase,
+    private readonly listarAcuerdosPorActa: ListarAcuerdosPorActaUseCase,
+    private readonly subirActaFisica: SubirActaFisicaUseCase,
   ) {}
 
   public crear = async (req: Request, res: Response): Promise<void> => {
@@ -41,5 +46,27 @@ export class ActaController {
   public avance = async (req: Request, res: Response): Promise<void> => {
     const acta = await this.calcularAvance.execute(req.params.id as string);
     res.json({ porcentajeAvance: acta.porcentajeAvance });
+  };
+
+  public exportarWord = async (req: Request, res: Response): Promise<void> => {
+    const actaId = req.params.id as string;
+    const acta = await this.obtenerActa.execute(actaId);
+    const acuerdos = await this.listarAcuerdosPorActa.execute(actaId);
+    const buffer = await buildActaWordBuffer(acta, acuerdos);
+
+    const nombreArchivo = `acta-${acta.titulo.replace(/[^a-zA-Z0-9-_]+/g, '-').toLowerCase()}.docx`;
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${nombreArchivo}"`);
+    res.send(buffer);
+  };
+
+  public subirActaFisicaHandler = async (req: Request, res: Response): Promise<void> => {
+    if (!req.file) throw new ValidationError('Debes adjuntar un archivo en el campo "archivo"');
+
+    const resultado = await this.subirActaFisica.execute(req.params.id as string, {
+      buffer: req.file.buffer,
+      mimeType: req.file.mimetype,
+    });
+    res.status(201).json(resultado);
   };
 }

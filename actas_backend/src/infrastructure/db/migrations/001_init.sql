@@ -52,7 +52,7 @@ create table if not exists asistencia (
   acta_id uuid not null references acta(id) on delete cascade,
   usuario_id uuid not null references usuario(id),
   metodo text not null check (metodo in ('qr', 'firma_facial')),
-  fecha_hora timestamptz not null default now(),
+  fecha_hora timestamptz not null default now()
 );
 
 create table if not exists inasistente (

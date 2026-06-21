@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { RegistrarAsistenciaUseCase } from '../../application/use-cases/registrar-asistencia.use-case';
 import { ListarInasistentesUseCase } from '../../application/use-cases/listar-inasistentes.use-case';
 import { SubirEvidenciaInasistenciaUseCase } from '../../application/use-cases/subir-evidencia-inasistencia.use-case';
+import { ListarAsistentesFirmadosUseCase } from '../../application/use-cases/listar-asistentes-firmados.use-case';
 import { registrarAsistenciaSchema } from './asistencia.validators';
 import { UnauthorizedError, ValidationError } from '../../../../shared/errors/domain-error';
 
@@ -10,6 +11,7 @@ export class AsistenciaController {
     private readonly registrarAsistencia: RegistrarAsistenciaUseCase,
     private readonly listarInasistentes: ListarInasistentesUseCase,
     private readonly subirEvidenciaInasistencia: SubirEvidenciaInasistenciaUseCase,
+    private readonly listarAsistentesFirmados: ListarAsistentesFirmadosUseCase,
   ) {}
 
   public registrar = async (req: Request, res: Response): Promise<void> => {
@@ -29,6 +31,11 @@ export class AsistenciaController {
   public listarInasistentesHandler = async (req: Request, res: Response): Promise<void> => {
     const inasistentes = await this.listarInasistentes.execute(req.params.actaId as string);
     res.json(inasistentes);
+  };
+
+  public listarAsistentesFirmadosHandler = async (req: Request, res: Response): Promise<void> => {
+    const asistentes = await this.listarAsistentesFirmados.execute(req.params.actaId as string);
+    res.json(asistentes);
   };
 
   public subirEvidenciaInasistenciaHandler = async (req: Request, res: Response): Promise<void> => {

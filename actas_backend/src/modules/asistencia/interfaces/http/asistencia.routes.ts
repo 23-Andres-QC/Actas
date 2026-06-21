@@ -14,6 +14,7 @@ export function asistenciaRoutes(controller: AsistenciaController): Router {
   router.use(asyncHandler(authMiddleware));
 
   router.post('/', uploadFirma.single('firma'), asyncHandler(controller.registrar));
+  router.get('/', asyncHandler(controller.listarAsistentesFirmadosHandler));
 
   router.get(
     '/inasistentes',

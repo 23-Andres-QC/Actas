@@ -1,8 +1,9 @@
 import { useParams } from 'react-router-dom';
-import { useRef } from 'react';
-import { CalendarDays, Clock, MapPin, Upload, UserX, FileCheck2 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { CalendarDays, Clock, Download, Loader2, MapPin, Upload, UserX, FileCheck2 } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
+import { actasApi } from '../api/actas.api';
 import { useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { PageHeader } from '../../../components/page-header';
 import { Card, CardContent } from '../../../components/ui/card';
@@ -26,13 +27,34 @@ export function ActaDetallePage() {
   const { data: acuerdos } = useAcuerdosPorActa(id ?? '');
   const { esSuperAdmin, esAdmin, esConvocador } = useRol();
   const puedeVerInasistentes = esSuperAdmin || esAdmin || esConvocador;
+  const [descargando, setDescargando] = useState(false);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Cargando...</p>;
   if (isError || !acta) return <p className="text-sm font-medium text-destructive">No se pudo cargar el acta</p>;
 
+  const descargarWord = async () => {
+    setDescargando(true);
+    try {
+      const blob = await actasApi.descargarWord(acta.id);
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `acta-${acta.titulo}.docx`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDescargando(false);
+    }
+  };
+
   return (
     <section>
-      <PageHeader title={acta.titulo} description={`Avance general: ${acta.porcentajeAvance}%`} />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <PageHeader title={acta.titulo} description={`Avance general: ${acta.porcentajeAvance}%`} />
+        <Button variant="outline" size="sm" onClick={descargarWord} disabled={descargando}>
+          {descargando ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Descargar Word
+        </Button>
+      </div>
 
       <Card className="mb-6 space-y-4 p-5">
         <div className="flex flex-wrap items-center gap-3">

@@ -6,4 +6,5 @@ export const actasApi = {
   detalle: (id: string) => httpClient.get<Acta>(`/actas/${id}`),
   crear: (input: CrearActaInput) => httpClient.post<Acta>('/actas', input),
   recalcularAvance: (id: string) => httpClient.get<{ porcentajeAvance: number }>(`/actas/${id}/avance`),
+  descargarWord: (id: string) => httpClient.getBlob(`/actas/${id}/word`),
 };
