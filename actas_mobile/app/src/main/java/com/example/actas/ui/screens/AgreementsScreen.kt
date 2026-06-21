@@ -1,5 +1,6 @@
 package com.example.actas.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -20,7 +21,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.actas.ActasApplication
+import com.example.actas.data.remote.ApiConfig
 import com.example.actas.data.remote.dto.AcuerdoDto
+import com.example.actas.data.remote.mensajeDeErrorRed
 import com.example.actas.ui.theme.SemaforoAmarillo
 import com.example.actas.ui.theme.SemaforoAmarilloTexto
 import com.example.actas.ui.theme.SemaforoRojo
@@ -52,7 +55,8 @@ fun AgreementsScreen(
             state = try {
                 AgreementsUiState.Success(app.backendApi.misAcuerdos())
             } catch (e: Exception) {
-                AgreementsUiState.Error("No se pudieron cargar tus acuerdos. Verifica tu conexión.")
+                Log.e("AgreementsScreen", "Error al cargar mis acuerdos desde ${ApiConfig.BACKEND_URL}", e)
+                AgreementsUiState.Error(mensajeDeErrorRed(e))
             }
         }
     }

@@ -2,6 +2,7 @@ package com.example.actas.ui.screens
 
 import android.graphics.Bitmap
 import android.net.Uri
+import android.util.Log
 import android.view.MotionEvent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -35,6 +36,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.actas.ActasApplication
+import com.example.actas.data.remote.mensajeDeErrorRed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,8 +124,9 @@ fun SignatureScreen(
                 guardando = false
                 onSignatureSaved()
             } catch (e: Exception) {
+                Log.e("SignatureScreen", "Error registrando asistencia para acta $actaId", e)
                 guardando = false
-                error = "No se pudo registrar tu asistencia. Intenta de nuevo."
+                error = mensajeDeErrorRed(e)
             }
         }
     }

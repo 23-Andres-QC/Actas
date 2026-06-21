@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.actas.ActasApplication
+import com.example.actas.data.remote.mensajeDeErrorRed
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,7 +41,7 @@ private fun mensajeDeError(e: Exception): String {
         val mensaje = cuerpo?.let { runCatching { Gson().fromJson(it, ErrorBody::class.java).error?.message }.getOrNull() }
         if (!mensaje.isNullOrBlank()) return mensaje
     }
-    return "No se pudo subir la evidencia. Intenta de nuevo."
+    return mensajeDeErrorRed(e)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

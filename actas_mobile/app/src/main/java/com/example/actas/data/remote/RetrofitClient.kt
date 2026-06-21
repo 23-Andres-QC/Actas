@@ -7,6 +7,7 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 /** Adjunta el JWT de Supabase a cada request hacia nuestro backend (nunca hacia Supabase mismo). */
 private class AuthInterceptor(private val sessionManager: SessionManager) : Interceptor {
@@ -41,6 +42,11 @@ object RetrofitClient {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(sessionManager))
             .addInterceptor(loggingInterceptor)
+            // El default de OkHttp (10s) no alcanza en algunos emuladores: la ruta NAT
+            // 10.0.2.2 -> host vía WSL2/Hyper-V puede ser bastante más lenta que una red real.
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
         return Retrofit.Builder()
             .baseUrl(ApiConfig.BACKEND_URL)
