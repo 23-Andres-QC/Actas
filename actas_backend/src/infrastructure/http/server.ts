@@ -30,8 +30,13 @@ export function createServer(pool: Pool): Express {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
   app.get('/ready', async (_req, res) => {
-    await pool.query('select 1');
-    res.json({ status: 'ready' });
+    try {
+      await pool.query('select 1');
+      res.json({ status: 'ready' });
+    } catch (err) {
+      logger.warn({ err }, 'Postgres no disponible');
+      res.status(503).json({ status: 'not_ready' });
+    }
   });
 
   app.use('/api/v1/usuarios', usuarioRoutes(container.usuarioController));

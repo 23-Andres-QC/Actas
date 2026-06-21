@@ -10,6 +10,11 @@ services:
       - actas_db_data:/var/lib/postgresql/data
     ports:
       - "5433:5432" # 5432 ya está ocupado por un Postgres nativo de Windows en esta máquina
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U actas -d actas"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks:
       - actas_internal
 
@@ -22,7 +27,9 @@ services:
       NODE_ENV: production
       DATABASE_URL: postgresql://actas:actas@db:5432/actas
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "npm run migrate && npm start"]
     ports:
       - "4000:4000"
     networks:

@@ -13,6 +13,7 @@ import { CrearActaUseCase } from '../modules/acta/application/use-cases/crear-ac
 import { ListarActasUseCase } from '../modules/acta/application/use-cases/listar-actas.use-case';
 import { ObtenerActaUseCase } from '../modules/acta/application/use-cases/obtener-acta.use-case';
 import { CalcularAvanceUseCase } from '../modules/acta/application/use-cases/calcular-avance.use-case';
+import { SubirActaFisicaUseCase } from '../modules/acta/application/use-cases/subir-acta-fisica.use-case';
 import { ActaController } from '../modules/acta/interfaces/http/acta.controller';
 
 // Acuerdo
@@ -27,9 +28,11 @@ import { AcuerdoController } from '../modules/acuerdo/interfaces/http/acuerdo.co
 import { PostgresAsistenciaRepository } from '../modules/asistencia/infrastructure/postgres-asistencia.repository';
 import { PostgresInasistentesProvider } from '../modules/asistencia/infrastructure/postgres-inasistentes.provider';
 import { PostgresInasistenteRepository } from '../modules/asistencia/infrastructure/postgres-inasistente.repository';
+import { PostgresAsistentesFirmadosProvider } from '../modules/asistencia/infrastructure/postgres-asistentes-firmados.provider';
 import { RegistrarAsistenciaUseCase } from '../modules/asistencia/application/use-cases/registrar-asistencia.use-case';
 import { ListarInasistentesUseCase } from '../modules/asistencia/application/use-cases/listar-inasistentes.use-case';
 import { SubirEvidenciaInasistenciaUseCase } from '../modules/asistencia/application/use-cases/subir-evidencia-inasistencia.use-case';
+import { ListarAsistentesFirmadosUseCase } from '../modules/asistencia/application/use-cases/listar-asistentes-firmados.use-case';
 import { AsistenciaController } from '../modules/asistencia/interfaces/http/asistencia.controller';
 import { SupabaseStorageAdapter } from '../modules/evidencia/infrastructure/supabase-storage.adapter';
 
@@ -55,15 +58,15 @@ export function buildContainer(pool: Pool) {
   const actaRepository = new PostgresActaRepository(pool);
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
   const acuerdoRepository = new PostgresAcuerdoRepository(pool);
+  const storage = new SupabaseStorageAdapter();
   const actaController = new ActaController(
     new CrearActaUseCase(actaRepository),
     new ListarActasUseCase(actaRepository, usuarioRepository),
     new ObtenerActaUseCase(actaRepository),
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
     new ListarAcuerdosPorActaUseCase(acuerdoRepository),
+    new SubirActaFisicaUseCase(actaRepository, storage),
   );
-
-  const storage = new SupabaseStorageAdapter();
 
   const acuerdoController = new AcuerdoController(
     new CrearAcuerdoUseCase(acuerdoRepository),
@@ -74,11 +77,13 @@ export function buildContainer(pool: Pool) {
 
   const asistenciaRepository = new PostgresAsistenciaRepository(pool);
   const inasistentesProvider = new PostgresInasistentesProvider(pool);
+  const asistentesFirmadosProvider = new PostgresAsistentesFirmadosProvider(pool);
   const inasistenteRepository = new PostgresInasistenteRepository(pool);
   const asistenciaController = new AsistenciaController(
     new RegistrarAsistenciaUseCase(asistenciaRepository, storage),
     new ListarInasistentesUseCase(inasistentesProvider),
     new SubirEvidenciaInasistenciaUseCase(inasistenteRepository, storage),
+    new ListarAsistentesFirmadosUseCase(asistentesFirmadosProvider),
   );
 
   const evidenciaRepository = new PostgresEvidenciaRepository(pool);

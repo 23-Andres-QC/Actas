@@ -9,7 +9,8 @@
     "start": "node dist/main.js",
     "lint": "eslint . --ext .ts",
     "test": "vitest run",
-    "migrate": "tsx src/infrastructure/db/migrate.ts"
+    "migrate": "node dist/infrastructure/db/migrate.js",
+    "migrate:dev": "tsx src/infrastructure/db/migrate.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
@@ -34,6 +35,9 @@
     "@types/node": "^20.14.10",
     "@types/pg": "^8.11.6",
     "@types/ws": "^8.5.12",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
     "pino-pretty": "^11.2.1",
     "tsx": "^4.16.2",
     "typescript": "^5.5.3",
