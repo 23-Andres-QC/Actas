@@ -47,6 +47,14 @@ export class PostgresAcuerdoRepository implements AcuerdoRepository {
     return result.rows.map(toDomain);
   }
 
+  public async findByResponsableId(responsableId: string): Promise<Acuerdo[]> {
+    const result = await this.pool.query<AcuerdoRow>(
+      'select * from acuerdo where responsable_id = $1 order by fecha_fin',
+      [responsableId],
+    );
+    return result.rows.map(toDomain);
+  }
+
   public async save(acuerdo: Acuerdo): Promise<void> {
     await this.pool.query(
       `insert into acuerdo (id, acta_id, responsable_id, descripcion, fecha_inicio, fecha_fin, estado_semaforo, porcentaje_avance)

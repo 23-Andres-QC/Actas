@@ -28,7 +28,7 @@ export function ActasDashboardPage() {
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
       {isError && <p className="text-sm font-medium text-destructive">No se pudieron cargar las actas</p>}
-      {!isLoading && !actas?.length && (
+      {!isLoading && !isError && !actas?.length && (
         <p className="text-sm text-muted-foreground">No hay actas registradas todavía.</p>
       )}
 

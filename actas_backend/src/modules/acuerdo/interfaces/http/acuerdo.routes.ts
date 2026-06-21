@@ -17,6 +17,7 @@ export function acuerdoNestedRoutes(controller: AcuerdoController): Router {
 export function acuerdoRoutes(controller: AcuerdoController): Router {
   const router = Router();
   router.use(asyncHandler(authMiddleware));
+  router.get('/mios', asyncHandler(controller.listarMios));
   router.patch('/:id/avance', requireRole('convocador', 'admin', 'asistente'), asyncHandler(controller.actualizarAvanceHandler));
   return router;
 }

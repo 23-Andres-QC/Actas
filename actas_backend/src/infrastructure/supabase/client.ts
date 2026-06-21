@@ -21,3 +21,4 @@ export const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
 
 export const EVIDENCIAS_BUCKET = 'evidencias';
 export const ACTAS_BUCKET = 'actas';
+export const FIRMAS_BUCKET = 'firmas';

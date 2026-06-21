@@ -8,6 +8,20 @@ interface AsistenciaRow {
   usuario_id: string;
   metodo: MetodoAsistencia;
   fecha_hora: Date;
+  firma_url: string | null;
+}
+
+function toDomain(row: AsistenciaRow): Asistencia {
+  return Asistencia.reconstruir(
+    {
+      actaId: row.acta_id,
+      usuarioId: row.usuario_id,
+      metodo: row.metodo,
+      fechaHora: row.fecha_hora,
+      firmaUrl: row.firma_url,
+    },
+    row.id,
+  );
 }
 
 export class PostgresAsistenciaRepository implements AsistenciaRepository {
@@ -18,15 +32,22 @@ export class PostgresAsistenciaRepository implements AsistenciaRepository {
       'select * from asistencia where acta_id = $1 order by fecha_hora',
       [actaId],
     );
-    return result.rows.map((row) =>
-      Asistencia.registrar({ actaId: row.acta_id, usuarioId: row.usuario_id, metodo: row.metodo }, row.id),
-    );
+    return result.rows.map(toDomain);
   }
 
   public async save(asistencia: Asistencia): Promise<void> {
     await this.pool.query(
-      'insert into asistencia (id, acta_id, usuario_id, metodo, fecha_hora) values ($1, $2, $3, $4, $5)',
-      [asistencia.id, asistencia.actaId, asistencia.usuarioId, asistencia.metodo, asistencia.fechaHora],
+      `insert into asistencia (id, acta_id, usuario_id, metodo, fecha_hora, firma_url)
+       values ($1, $2, $3, $4, $5, $6)
+       on conflict (id) do update set firma_url = $6`,
+      [
+        asistencia.id,
+        asistencia.actaId,
+        asistencia.usuarioId,
+        asistencia.metodo,
+        asistencia.fechaHora,
+        asistencia.firmaUrl,
+      ],
     );
   }
 }

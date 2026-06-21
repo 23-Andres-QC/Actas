@@ -10,7 +10,13 @@ export class AsistenciaController {
     if (!req.user) throw new UnauthorizedError();
     const body = registrarAsistenciaSchema.parse(req.body);
 
-    await this.registrarAsistencia.execute(req.params.actaId as string, req.user.id, body.metodo);
-    res.status(201).json({ ok: true });
+    const resultado = await this.registrarAsistencia.execute(
+      req.params.actaId as string,
+      req.user.id,
+      body.metodo,
+      req.file ? { buffer: req.file.buffer, mimeType: req.file.mimetype } : undefined,
+    );
+
+    res.status(201).json({ ok: true, firmaUrl: resultado.firmaUrl });
   };
 }

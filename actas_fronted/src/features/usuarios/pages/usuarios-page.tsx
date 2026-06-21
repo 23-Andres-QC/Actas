@@ -19,7 +19,7 @@ export function UsuariosPage() {
 
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
       {isError && <p className="text-sm font-medium text-destructive">No se pudieron cargar los usuarios</p>}
-      {!isLoading && !usuarios?.length && (
+      {!isLoading && !isError && !usuarios?.length && (
         <p className="text-sm text-muted-foreground">No hay usuarios registrados.</p>
       )}
 

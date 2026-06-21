@@ -19,6 +19,7 @@ import { ActaController } from '../modules/acta/interfaces/http/acta.controller'
 import { PostgresAcuerdoRepository } from '../modules/acuerdo/infrastructure/postgres-acuerdo.repository';
 import { CrearAcuerdoUseCase } from '../modules/acuerdo/application/use-cases/crear-acuerdo.use-case';
 import { ListarAcuerdosPorActaUseCase } from '../modules/acuerdo/application/use-cases/listar-acuerdos-por-acta.use-case';
+import { ListarAcuerdosPorResponsableUseCase } from '../modules/acuerdo/application/use-cases/listar-acuerdos-por-responsable.use-case';
 import { ActualizarAvanceAcuerdoUseCase } from '../modules/acuerdo/application/use-cases/actualizar-avance-acuerdo.use-case';
 import { AcuerdoController } from '../modules/acuerdo/interfaces/http/acuerdo.controller';
 
@@ -26,10 +27,10 @@ import { AcuerdoController } from '../modules/acuerdo/interfaces/http/acuerdo.co
 import { PostgresAsistenciaRepository } from '../modules/asistencia/infrastructure/postgres-asistencia.repository';
 import { RegistrarAsistenciaUseCase } from '../modules/asistencia/application/use-cases/registrar-asistencia.use-case';
 import { AsistenciaController } from '../modules/asistencia/interfaces/http/asistencia.controller';
+import { SupabaseStorageAdapter } from '../modules/evidencia/infrastructure/supabase-storage.adapter';
 
 // Evidencia
 import { PostgresEvidenciaRepository } from '../modules/evidencia/infrastructure/postgres-evidencia.repository';
-import { SupabaseStorageAdapter } from '../modules/evidencia/infrastructure/supabase-storage.adapter';
 import { SubirEvidenciaUseCase } from '../modules/evidencia/application/use-cases/subir-evidencia.use-case';
 import { ListarEvidenciasUseCase } from '../modules/evidencia/application/use-cases/listar-evidencias.use-case';
 import { EvidenciaController } from '../modules/evidencia/interfaces/http/evidencia.controller';
@@ -56,18 +57,22 @@ export function buildContainer(pool: Pool) {
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
   );
 
+  const storage = new SupabaseStorageAdapter();
+
   const acuerdoRepository = new PostgresAcuerdoRepository(pool);
   const acuerdoController = new AcuerdoController(
     new CrearAcuerdoUseCase(acuerdoRepository),
     new ListarAcuerdosPorActaUseCase(acuerdoRepository),
     new ActualizarAvanceAcuerdoUseCase(acuerdoRepository),
+    new ListarAcuerdosPorResponsableUseCase(acuerdoRepository, actaRepository),
   );
 
   const asistenciaRepository = new PostgresAsistenciaRepository(pool);
-  const asistenciaController = new AsistenciaController(new RegistrarAsistenciaUseCase(asistenciaRepository));
+  const asistenciaController = new AsistenciaController(
+    new RegistrarAsistenciaUseCase(asistenciaRepository, storage),
+  );
 
   const evidenciaRepository = new PostgresEvidenciaRepository(pool);
-  const storage = new SupabaseStorageAdapter();
   const evidenciaController = new EvidenciaController(
     new SubirEvidenciaUseCase(evidenciaRepository, storage),
     new ListarEvidenciasUseCase(evidenciaRepository),

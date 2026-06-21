@@ -7,6 +7,7 @@ interface AsistenciaProps {
   usuarioId: string;
   metodo: MetodoAsistencia;
   fechaHora: Date;
+  firmaUrl: string | null;
 }
 
 export class Asistencia extends Entity<AsistenciaProps> {
@@ -14,8 +15,12 @@ export class Asistencia extends Entity<AsistenciaProps> {
     super(props, id);
   }
 
-  public static registrar(props: Omit<AsistenciaProps, 'fechaHora'>, id: string): Asistencia {
-    return new Asistencia({ ...props, fechaHora: new Date() }, id);
+  public static registrar(props: Omit<AsistenciaProps, 'fechaHora' | 'firmaUrl'>, id: string): Asistencia {
+    return new Asistencia({ ...props, fechaHora: new Date(), firmaUrl: null }, id);
+  }
+
+  public static reconstruir(props: AsistenciaProps, id: string): Asistencia {
+    return new Asistencia(props, id);
   }
 
   public get actaId(): string {
@@ -32,5 +37,13 @@ export class Asistencia extends Entity<AsistenciaProps> {
 
   public get fechaHora(): Date {
     return this.props.fechaHora;
+  }
+
+  public get firmaUrl(): string | null {
+    return this.props.firmaUrl;
+  }
+
+  public registrarFirma(url: string): void {
+    this.props.firmaUrl = url;
   }
 }
