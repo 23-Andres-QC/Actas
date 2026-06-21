@@ -8,7 +8,6 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   rol: Rol;
-  areaId: string | null;
 }
 
 declare module 'express-serve-static-core' {
@@ -24,6 +23,11 @@ declare module 'express-serve-static-core' {
  * o JWT Signing Keys asimétricos ECC/RSA) y evita mantener un secreto extra
  * en el backend. El rol nunca se confía desde el cliente: viene de
  * `app_metadata`, que solo se puede modificar con la service role key.
+ *
+ * Nota: el área del usuario NO viaja aquí. `app_metadata` solo se sincroniza
+ * a mano al crear el usuario en Supabase y puede quedar desactualizada
+ * respecto a `usuario.area_id` en Postgres; los casos de uso que necesiten
+ * el área siempre la resuelven desde el `UsuarioRepository` (fuente de verdad).
  */
 export async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
@@ -42,7 +46,6 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
     id: data.user.id,
     email: data.user.email ?? '',
     rol: (data.user.app_metadata?.rol as Rol) ?? 'asistente',
-    areaId: (data.user.app_metadata?.area_id as string) ?? null,
   };
   next();
 }

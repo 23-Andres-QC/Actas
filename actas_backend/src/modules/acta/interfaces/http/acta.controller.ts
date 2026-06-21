@@ -23,8 +23,13 @@ export class ActaController {
   };
 
   public listar = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     const query = listarActasQuerySchema.parse(req.query);
-    const actas = await this.listarActas.execute(query);
+    const actas = await this.listarActas.execute({
+      ...query,
+      ejecutadoPorId: req.user.id,
+      ejecutadoPorRol: req.user.rol,
+    });
     res.json(actas);
   };
 

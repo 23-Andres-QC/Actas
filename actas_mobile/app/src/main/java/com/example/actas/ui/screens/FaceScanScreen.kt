@@ -49,6 +49,7 @@ fun FaceScanScreen(
     var framesConRostro by remember { mutableIntStateOf(0) }
     var mensaje by remember { mutableStateOf("Ubica tu rostro dentro del óvalo") }
     var verificado by remember { mutableStateOf(false) }
+    val cameraController = remember { LifecycleCameraController(context) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -57,6 +58,11 @@ fun FaceScanScreen(
 
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    // Ver nota en QRScannerScreen: CameraX no se libera solo al navegar, hay que hacerlo a mano.
+    DisposableEffect(Unit) {
+        onDispose { cameraController.unbind() }
     }
 
     val progreso = (framesConRostro.toFloat() / FRAMES_REQUERIDOS).coerceIn(0f, 1f)
@@ -87,7 +93,6 @@ fun FaceScanScreen(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
-                    val cameraController = LifecycleCameraController(ctx)
                     val options = FaceDetectorOptions.Builder()
                         .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
                         .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)

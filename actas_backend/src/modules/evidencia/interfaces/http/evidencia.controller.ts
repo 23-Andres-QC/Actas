@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SubirEvidenciaUseCase } from '../../application/use-cases/subir-evidencia.use-case';
 import { ListarEvidenciasUseCase } from '../../application/use-cases/listar-evidencias.use-case';
-import { ValidationError } from '../../../../shared/errors/domain-error';
+import { ValidationError, UnauthorizedError } from '../../../../shared/errors/domain-error';
 
 export class EvidenciaController {
   constructor(
@@ -10,6 +10,7 @@ export class EvidenciaController {
   ) {}
 
   public subir = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     if (!req.file) {
       throw new ValidationError('Debes adjuntar un archivo en el campo "archivo"');
     }
@@ -19,6 +20,8 @@ export class EvidenciaController {
       archivo: req.file.buffer,
       mimeType: req.file.mimetype,
       nombreArchivo: req.file.originalname,
+      ejecutadoPorId: req.user.id,
+      ejecutadoPorRol: req.user.rol,
     });
 
     res.status(201).json({ ok: true });

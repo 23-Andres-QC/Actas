@@ -11,8 +11,13 @@ export class UsuarioController {
   ) {}
 
   public listar = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     const query = listarUsuariosQuerySchema.parse(req.query);
-    const usuarios = await this.listarUsuarios.execute(query);
+    const usuarios = await this.listarUsuarios.execute({
+      ...query,
+      ejecutadoPorId: req.user.id,
+      ejecutadoPorRol: req.user.rol,
+    });
     res.json(usuarios);
   };
 

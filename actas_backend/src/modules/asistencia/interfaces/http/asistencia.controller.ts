@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
 import { RegistrarAsistenciaUseCase } from '../../application/use-cases/registrar-asistencia.use-case';
+import { ListarInasistentesUseCase } from '../../application/use-cases/listar-inasistentes.use-case';
+import { SubirEvidenciaInasistenciaUseCase } from '../../application/use-cases/subir-evidencia-inasistencia.use-case';
 import { registrarAsistenciaSchema } from './asistencia.validators';
-import { UnauthorizedError } from '../../../../shared/errors/domain-error';
+import { UnauthorizedError, ValidationError } from '../../../../shared/errors/domain-error';
 
 export class AsistenciaController {
-  constructor(private readonly registrarAsistencia: RegistrarAsistenciaUseCase) {}
+  constructor(
+    private readonly registrarAsistencia: RegistrarAsistenciaUseCase,
+    private readonly listarInasistentes: ListarInasistentesUseCase,
+    private readonly subirEvidenciaInasistencia: SubirEvidenciaInasistenciaUseCase,
+  ) {}
 
   public registrar = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) throw new UnauthorizedError();
@@ -18,5 +24,22 @@ export class AsistenciaController {
     );
 
     res.status(201).json({ ok: true, firmaUrl: resultado.firmaUrl });
+  };
+
+  public listarInasistentesHandler = async (req: Request, res: Response): Promise<void> => {
+    const inasistentes = await this.listarInasistentes.execute(req.params.actaId as string);
+    res.json(inasistentes);
+  };
+
+  public subirEvidenciaInasistenciaHandler = async (req: Request, res: Response): Promise<void> => {
+    if (!req.file) throw new ValidationError('Debes adjuntar un archivo en el campo "archivo"');
+
+    const resultado = await this.subirEvidenciaInasistencia.execute(
+      req.params.actaId as string,
+      req.params.usuarioId as string,
+      { buffer: req.file.buffer, mimeType: req.file.mimetype },
+    );
+
+    res.status(201).json(resultado);
   };
 }

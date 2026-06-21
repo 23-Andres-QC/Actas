@@ -42,6 +42,7 @@ fun QRScannerScreen(
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
     var yaEscaneado by remember { mutableStateOf(false) }
+    val cameraController = remember { LifecycleCameraController(context) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -50,6 +51,12 @@ fun QRScannerScreen(
 
     LaunchedEffect(Unit) {
         if (!hasCameraPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    // CameraX está atado al lifecycle de la Activity, no al composable: sin este unbind
+    // explícito la cámara sigue activa de fondo al navegar a la siguiente pantalla.
+    DisposableEffect(Unit) {
+        onDispose { cameraController.unbind() }
     }
 
     Scaffold(
@@ -78,7 +85,6 @@ fun QRScannerScreen(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
-                    val cameraController = LifecycleCameraController(ctx)
                     val barcodeScanner = BarcodeScanning.getClient()
 
                     cameraController.setImageAnalysisAnalyzer(

@@ -32,8 +32,14 @@ export class AcuerdoController {
   };
 
   public actualizarAvanceHandler = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     const body = actualizarAvanceSchema.parse(req.body);
-    const acuerdo = await this.actualizarAvance.execute(req.params.id as string, body.porcentajeAvance);
+    const acuerdo = await this.actualizarAvance.execute(
+      req.params.id as string,
+      body.porcentajeAvance,
+      req.user.id,
+      req.user.rol,
+    );
     res.json(acuerdo);
   };
 }

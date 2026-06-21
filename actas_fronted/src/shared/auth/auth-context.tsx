@@ -54,13 +54,17 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
-/** Espejo del RBAC del backend: centraliza qué puede ver/hacer el usuario en la UI. */
+/**
+ * Espejo del RBAC del backend: centraliza qué puede ver/hacer el usuario en la UI.
+ * Cada `esX` es exclusivo (un usuario tiene un solo rol). Para lógica de "admin o
+ * superior" se compone explícitamente, ej. `esAdmin || esSuperAdmin`.
+ */
 export function useRol() {
   const { rol } = useAuth();
   return {
     rol,
     esSuperAdmin: rol === 'superadmin',
-    esAdmin: rol === 'admin' || rol === 'superadmin',
+    esAdmin: rol === 'admin',
     esConvocador: rol === 'convocador',
     esAsistente: rol === 'asistente',
   };

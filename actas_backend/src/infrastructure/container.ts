@@ -25,7 +25,11 @@ import { AcuerdoController } from '../modules/acuerdo/interfaces/http/acuerdo.co
 
 // Asistencia
 import { PostgresAsistenciaRepository } from '../modules/asistencia/infrastructure/postgres-asistencia.repository';
+import { PostgresInasistentesProvider } from '../modules/asistencia/infrastructure/postgres-inasistentes.provider';
+import { PostgresInasistenteRepository } from '../modules/asistencia/infrastructure/postgres-inasistente.repository';
 import { RegistrarAsistenciaUseCase } from '../modules/asistencia/application/use-cases/registrar-asistencia.use-case';
+import { ListarInasistentesUseCase } from '../modules/asistencia/application/use-cases/listar-inasistentes.use-case';
+import { SubirEvidenciaInasistenciaUseCase } from '../modules/asistencia/application/use-cases/subir-evidencia-inasistencia.use-case';
 import { AsistenciaController } from '../modules/asistencia/interfaces/http/asistencia.controller';
 import { SupabaseStorageAdapter } from '../modules/evidencia/infrastructure/supabase-storage.adapter';
 
@@ -52,7 +56,7 @@ export function buildContainer(pool: Pool) {
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
   const actaController = new ActaController(
     new CrearActaUseCase(actaRepository),
-    new ListarActasUseCase(actaRepository),
+    new ListarActasUseCase(actaRepository, usuarioRepository),
     new ObtenerActaUseCase(actaRepository),
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
   );
@@ -63,18 +67,22 @@ export function buildContainer(pool: Pool) {
   const acuerdoController = new AcuerdoController(
     new CrearAcuerdoUseCase(acuerdoRepository),
     new ListarAcuerdosPorActaUseCase(acuerdoRepository),
-    new ActualizarAvanceAcuerdoUseCase(acuerdoRepository),
+    new ActualizarAvanceAcuerdoUseCase(acuerdoRepository, actaRepository, avanceAcuerdosProvider),
     new ListarAcuerdosPorResponsableUseCase(acuerdoRepository, actaRepository),
   );
 
   const asistenciaRepository = new PostgresAsistenciaRepository(pool);
+  const inasistentesProvider = new PostgresInasistentesProvider(pool);
+  const inasistenteRepository = new PostgresInasistenteRepository(pool);
   const asistenciaController = new AsistenciaController(
     new RegistrarAsistenciaUseCase(asistenciaRepository, storage),
+    new ListarInasistentesUseCase(inasistentesProvider),
+    new SubirEvidenciaInasistenciaUseCase(inasistenteRepository, storage),
   );
 
   const evidenciaRepository = new PostgresEvidenciaRepository(pool);
   const evidenciaController = new EvidenciaController(
-    new SubirEvidenciaUseCase(evidenciaRepository, storage),
+    new SubirEvidenciaUseCase(evidenciaRepository, storage, acuerdoRepository),
     new ListarEvidenciasUseCase(evidenciaRepository),
   );
 

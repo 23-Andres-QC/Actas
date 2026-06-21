@@ -36,10 +36,16 @@ export class PostgresAsistenciaRepository implements AsistenciaRepository {
   }
 
   public async save(asistencia: Asistencia): Promise<void> {
+    // Conflicto por (acta_id, usuario_id), no por id: cada llamada genera un id nuevo,
+    // así que re-escanear el QR para la misma reunión debe actualizar el registro
+    // existente en vez de crear uno duplicado.
     await this.pool.query(
       `insert into asistencia (id, acta_id, usuario_id, metodo, fecha_hora, firma_url)
        values ($1, $2, $3, $4, $5, $6)
-       on conflict (id) do update set firma_url = $6`,
+       on conflict (acta_id, usuario_id) do update set
+         metodo = excluded.metodo,
+         fecha_hora = excluded.fecha_hora,
+         firma_url = coalesce(excluded.firma_url, asistencia.firma_url)`,
       [
         asistencia.id,
         asistencia.actaId,
