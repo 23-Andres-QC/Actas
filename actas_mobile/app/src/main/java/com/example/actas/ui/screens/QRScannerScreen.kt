@@ -87,6 +87,9 @@ fun QRScannerScreen(
                     val previewView = PreviewView(ctx)
                     val barcodeScanner = BarcodeScanning.getClient()
 
+                    cameraController.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
+
                     cameraController.setImageAnalysisAnalyzer(
                         ContextCompat.getMainExecutor(ctx),
                         MlKitAnalyzer(
@@ -105,9 +108,7 @@ fun QRScannerScreen(
                         },
                     )
 
-                    cameraController.cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
                     cameraController.bindToLifecycle(lifecycleOwner)
-                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS)
                     previewView.controller = cameraController
                     previewView
                 },

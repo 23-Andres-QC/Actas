@@ -33,8 +33,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.actas.ActasApplication
 import com.example.actas.data.remote.mensajeDeErrorRed
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -145,11 +143,7 @@ fun FaceEnrollmentScreen(onContinuar: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
-                    val options = FaceDetectorOptions.Builder()
-                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                        .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                        .build()
-                    val faceDetector = FaceDetection.getClient(options)
+                    val faceDetector = app.faceDetector
 
                     cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                     cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)

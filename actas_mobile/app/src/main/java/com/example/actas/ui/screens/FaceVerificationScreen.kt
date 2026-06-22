@@ -35,8 +35,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.actas.ActasApplication
 import com.example.actas.data.remote.mensajeDeErrorRed
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -222,11 +220,7 @@ fun FaceVerificationScreen(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx ->
                     val previewView = PreviewView(ctx)
-                    val options = FaceDetectorOptions.Builder()
-                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                        .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                        .build()
-                    val faceDetector = FaceDetection.getClient(options)
+                    val faceDetector = app.faceDetector
                     previewView.controller = cameraController
 
                     cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
