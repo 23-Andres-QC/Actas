@@ -21,6 +21,8 @@ interface ActaProps {
   agenda: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
+  urlReunion: string | null;
+  qrToken: string;
   porcentajeAvance: PorcentajeAvance;
 }
 
@@ -30,7 +32,10 @@ export class Acta extends AggregateRoot<ActaProps> {
   }
 
   public static crear(
-    props: Omit<ActaProps, 'porcentajeAvance' | 'urlGrabacion' | 'urlActaFisica'>,
+    props: Omit<ActaProps, 'porcentajeAvance' | 'urlGrabacion' | 'urlActaFisica' | 'urlReunion' | 'qrToken'> & {
+      qrToken: string;
+      urlReunion: string | null;
+    },
     id: string,
   ): Acta {
     const acta = new Acta(
@@ -99,6 +104,14 @@ export class Acta extends AggregateRoot<ActaProps> {
 
   public get urlActaFisica(): string | null {
     return this.props.urlActaFisica;
+  }
+
+  public get urlReunion(): string | null {
+    return this.props.urlReunion;
+  }
+
+  public get qrToken(): string {
+    return this.props.qrToken;
   }
 
   public get porcentajeAvance(): PorcentajeAvance {

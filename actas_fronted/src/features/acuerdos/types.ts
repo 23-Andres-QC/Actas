@@ -21,5 +21,6 @@ export interface EvidenciaAcuerdo {
   id: string;
   acuerdoId: string;
   urlArchivo: string;
+  tipo: 'archivo' | 'link';
   fechaSubida: string;
 }

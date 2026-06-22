@@ -25,7 +25,11 @@ export class ActaController {
     if (!req.user) throw new UnauthorizedError();
     const body = crearActaSchema.parse(req.body);
 
-    const acta = await this.crearActa.execute({ ...body, convocadorId: req.user.id });
+    const acta = await this.crearActa.execute({
+      ...body,
+      convocadorId: req.user.id,
+      ejecutadoPorRol: req.user.rol,
+    });
     res.status(201).json(acta);
   };
 
@@ -41,7 +45,8 @@ export class ActaController {
   };
 
   public detalle = async (req: Request, res: Response): Promise<void> => {
-    const acta = await this.obtenerActa.execute(req.params.id as string);
+    if (!req.user) throw new UnauthorizedError();
+    const acta = await this.obtenerActa.execute(req.params.id as string, req.user.id, req.user.rol);
     res.json(acta);
   };
 
@@ -51,9 +56,10 @@ export class ActaController {
   };
 
   public exportarWord = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     const actaId = req.params.id as string;
     const [acta, acuerdos, asistentes] = await Promise.all([
-      this.obtenerActa.execute(actaId),
+      this.obtenerActa.execute(actaId, req.user.id, req.user.rol),
       this.listarAcuerdosPorActa.execute(actaId),
       this.listarAsistentesFirmados.execute(actaId),
     ]);

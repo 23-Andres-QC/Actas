@@ -1,12 +1,14 @@
 import { randomUUID } from 'crypto';
 import { AsistenciaRepository } from '../../domain/asistencia.repository';
 import { Asistencia, MetodoAsistencia } from '../../domain/asistencia.entity';
+import { ActaRepository } from '../../../acta/domain/acta.repository';
 import { StoragePort } from '../../../evidencia/domain/storage.port';
 import { FIRMAS_BUCKET } from '../../../../infrastructure/supabase/client';
-import { ValidationError } from '../../../../shared/errors/domain-error';
+import { ForbiddenError, NotFoundError, ValidationError } from '../../../../shared/errors/domain-error';
 
 const TIPOS_FIRMA_PERMITIDOS = ['image/png', 'image/jpeg'];
 const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024; // 5 MB
+const METODOS_QUE_REQUIEREN_TOKEN: MetodoAsistencia[] = ['qr', 'biometrico'];
 
 interface FirmaInput {
   buffer: Buffer;
@@ -17,6 +19,7 @@ export class RegistrarAsistenciaUseCase {
   constructor(
     private readonly asistenciaRepository: AsistenciaRepository,
     private readonly storage: StoragePort,
+    private readonly actaRepository: ActaRepository,
   ) {}
 
   public async execute(
@@ -24,7 +27,16 @@ export class RegistrarAsistenciaUseCase {
     usuarioId: string,
     metodo: MetodoAsistencia,
     firma?: FirmaInput,
+    qrToken?: string,
   ): Promise<{ firmaUrl: string | null }> {
+    if (METODOS_QUE_REQUIEREN_TOKEN.includes(metodo)) {
+      const acta = await this.actaRepository.findById(actaId);
+      if (!acta) throw new NotFoundError('Acta', actaId);
+      if (!qrToken || qrToken !== acta.qrToken) {
+        throw new ForbiddenError('El código QR no corresponde a esta acta');
+      }
+    }
+
     const asistencia = Asistencia.registrar({ actaId, usuarioId, metodo }, randomUUID());
 
     if (firma) {

@@ -9,6 +9,7 @@ export class ListarEvidenciasUseCase {
       id: e.id,
       acuerdoId: e.acuerdoId,
       urlArchivo: e.urlArchivo,
+      tipo: e.tipo,
       fechaSubida: e.fechaSubida.toISOString(),
     }));
   }

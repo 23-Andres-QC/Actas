@@ -9,14 +9,17 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.actas.ActasApplication
 import com.example.actas.ui.screens.AgreementsScreen
-import com.example.actas.ui.screens.FaceScanScreen
+import com.example.actas.ui.screens.FaceEnrollmentScreen
+import com.example.actas.ui.screens.FaceVerificationScreen
 import com.example.actas.ui.screens.LoginScreen
 import com.example.actas.ui.screens.QRScannerScreen
 import com.example.actas.ui.screens.SignatureScreen
 import com.example.actas.ui.screens.UploadEvidenceScreen
 
 private const val ROUTE_LOGIN = "login"
+private const val ROUTE_BIOMETRIC_SETUP = "face_enrollment"
 private const val ROUTE_AGREEMENTS = "agreements"
+private const val ROUTE_MI_FIRMA = "mi_firma"
 
 @Composable
 fun AppNavigation() {
@@ -28,7 +31,15 @@ fun AppNavigation() {
         composable(ROUTE_LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
-                    navController.navigate(ROUTE_AGREEMENTS) { popUpTo(ROUTE_LOGIN) { inclusive = true } }
+                    val destino = if (app.sessionManager.biometriaConfigurada()) ROUTE_AGREEMENTS else ROUTE_BIOMETRIC_SETUP
+                    navController.navigate(destino) { popUpTo(ROUTE_LOGIN) { inclusive = true } }
+                },
+            )
+        }
+        composable(ROUTE_BIOMETRIC_SETUP) {
+            FaceEnrollmentScreen(
+                onContinuar = {
+                    navController.navigate(ROUTE_AGREEMENTS) { popUpTo(ROUTE_BIOMETRIC_SETUP) { inclusive = true } }
                 },
             )
         }
@@ -36,34 +47,64 @@ fun AppNavigation() {
             AgreementsScreen(
                 onScanQR = { navController.navigate("qr_scanner") },
                 onUploadEvidence = { agreementId -> navController.navigate("upload_evidence/$agreementId") },
+                onMiFirma = { navController.navigate(ROUTE_MI_FIRMA) },
                 onLogout = {
                     navController.navigate(ROUTE_LOGIN) { popUpTo(0) { inclusive = true } }
                 },
             )
         }
+        composable(ROUTE_MI_FIRMA) {
+            SignatureScreen(
+                onSignatureSaved = { navController.popBackStack() },
+                onBack = { navController.popBackStack() },
+            )
+        }
         composable("qr_scanner") {
             QRScannerScreen(
-                onQRScanned = { actaId -> navController.navigate("face_scan/$actaId") { popUpTo("qr_scanner") { inclusive = true } } },
+                onQRScanned = { actaId, qrToken ->
+                    navController.navigate("biometric_verify/$actaId/$qrToken") { popUpTo("qr_scanner") { inclusive = true } }
+                },
                 onBack = { navController.popBackStack() },
             )
         }
         composable(
-            route = "face_scan/{actaId}",
-            arguments = listOf(navArgument("actaId") { type = NavType.StringType }),
+            route = "biometric_verify/{actaId}/{qrToken}",
+            arguments = listOf(
+                navArgument("actaId") { type = NavType.StringType },
+                navArgument("qrToken") { type = NavType.StringType },
+            ),
         ) { backStackEntry ->
             val actaId = backStackEntry.arguments?.getString("actaId") ?: ""
-            FaceScanScreen(
-                onFaceVerified = { navController.navigate("signature/$actaId") { popUpTo("face_scan/$actaId") { inclusive = true } } },
+            val qrToken = backStackEntry.arguments?.getString("qrToken") ?: ""
+            FaceVerificationScreen(
+                actaId = actaId,
+                qrToken = qrToken,
+                onAsistenciaRegistrada = {
+                    navController.navigate(ROUTE_AGREEMENTS) { popUpTo(ROUTE_AGREEMENTS) { inclusive = true } }
+                },
+                onNecesitaFirmar = { metodo ->
+                    navController.navigate("signature/$actaId/$qrToken/$metodo") {
+                        popUpTo("biometric_verify/$actaId/$qrToken") { inclusive = true }
+                    }
+                },
                 onBack = { navController.popBackStack() },
             )
         }
         composable(
-            route = "signature/{actaId}",
-            arguments = listOf(navArgument("actaId") { type = NavType.StringType }),
+            route = "signature/{actaId}/{qrToken}/{metodo}",
+            arguments = listOf(
+                navArgument("actaId") { type = NavType.StringType },
+                navArgument("qrToken") { type = NavType.StringType },
+                navArgument("metodo") { type = NavType.StringType },
+            ),
         ) { backStackEntry ->
             val actaId = backStackEntry.arguments?.getString("actaId") ?: ""
+            val qrToken = backStackEntry.arguments?.getString("qrToken")
+            val metodo = backStackEntry.arguments?.getString("metodo") ?: "firma_facial"
             SignatureScreen(
                 actaId = actaId,
+                metodo = metodo,
+                qrToken = qrToken,
                 onSignatureSaved = {
                     navController.navigate(ROUTE_AGREEMENTS) { popUpTo(ROUTE_AGREEMENTS) { inclusive = true } }
                 },

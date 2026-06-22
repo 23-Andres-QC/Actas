@@ -40,6 +40,12 @@ class SessionManager(context: Context) {
 
     fun haySesionActiva(): Boolean = accessToken() != null
 
+    fun biometriaConfigurada(): Boolean = prefs.getBoolean(KEY_BIOMETRIA_CONFIGURADA, false)
+
+    fun marcarBiometriaConfigurada() {
+        prefs.edit().putBoolean(KEY_BIOMETRIA_CONFIGURADA, true).apply()
+    }
+
     fun cerrarSesion() {
         prefs.edit().clear().apply()
     }
@@ -50,5 +56,6 @@ class SessionManager(context: Context) {
         private const val KEY_USER_ID = "user_id"
         private const val KEY_EMAIL = "email"
         private const val KEY_ROL = "rol"
+        private const val KEY_BIOMETRIA_CONFIGURADA = "biometria_configurada"
     }
 }

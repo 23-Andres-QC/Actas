@@ -18,8 +18,10 @@ export class ListarUsuariosUseCase {
     }
 
     const ejecutor = await this.usuarioRepository.findById(input.ejecutadoPorId);
-    if (!ejecutor?.esJefe || !ejecutor.areaId) {
-      throw new ForbiddenError('Solo el SuperAdmin o el jefe de un área puede ver usuarios');
+    const puedeVerSuArea =
+      ejecutor?.esJefe || input.ejecutadoPorRol === 'admin' || input.ejecutadoPorRol === 'convocador';
+    if (!puedeVerSuArea || !ejecutor?.areaId) {
+      throw new ForbiddenError('Solo el SuperAdmin, el jefe de un área, un Admin o un Convocador pueden ver usuarios de su área');
     }
 
     const desuArea = await this.usuarioRepository.findAllListado({ areaId: ejecutor.areaId });

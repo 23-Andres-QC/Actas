@@ -9,10 +9,8 @@ interface InasistenteRow {
 }
 
 /**
- * Calcula inasistentes como: usuarios de la misma área del acta que NO tienen
- * un registro en `asistencia` para esa acta. Es la definición práctica de
- * "convocado" dado que el esquema actual no modela una lista explícita de
- * invitados por reunión (ver docs/database.md).
+ * Calcula inasistentes como: invitados explícitos de la acta (tabla `acta_invitado`,
+ * fijada al crear la acta) que NO tienen un registro en `asistencia` para esa acta.
  */
 export class PostgresInasistentesProvider implements InasistentesProvider {
   constructor(private readonly pool: Pool) {}
@@ -20,11 +18,11 @@ export class PostgresInasistentesProvider implements InasistentesProvider {
   public async obtenerPorActa(actaId: string): Promise<InasistenteInfo[]> {
     const result = await this.pool.query<InasistenteRow>(
       `select u.id as usuario_id, u.nombre, u.email, i.evidencia_url
-       from usuario u
-       join acta a on a.area_id = u.area_id
-       left join asistencia asis on asis.acta_id = a.id and asis.usuario_id = u.id
-       left join inasistente i on i.acta_id = a.id and i.usuario_id = u.id
-       where a.id = $1 and asis.id is null
+       from acta_invitado ai
+       join usuario u on u.id = ai.usuario_id
+       left join asistencia asis on asis.acta_id = ai.acta_id and asis.usuario_id = u.id
+       left join inasistente i on i.acta_id = ai.acta_id and i.usuario_id = u.id
+       where ai.acta_id = $1 and asis.id is null
        order by u.nombre`,
       [actaId],
     );

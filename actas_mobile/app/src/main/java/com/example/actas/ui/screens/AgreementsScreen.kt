@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
@@ -41,6 +42,7 @@ private sealed interface AgreementsUiState {
 fun AgreementsScreen(
     onScanQR: () -> Unit,
     onUploadEvidence: (String) -> Unit,
+    onMiFirma: () -> Unit,
     onLogout: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -75,6 +77,9 @@ fun AgreementsScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onMiFirma) {
+                        Icon(Icons.Default.Draw, contentDescription = "Mi firma")
+                    }
                     IconButton(onClick = {
                         app.sessionManager.cerrarSesion()
                         onLogout()

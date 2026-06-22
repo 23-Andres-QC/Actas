@@ -1,6 +1,7 @@
 import { ActaRepository } from '../../domain/acta.repository';
 import { StoragePort } from '../../../evidencia/domain/storage.port';
 import { ACTAS_BUCKET } from '../../../../infrastructure/supabase/client';
+import { extraerPathDesdeUrlFirmada } from '../../../../infrastructure/supabase/extraer-path';
 import { NotFoundError, ValidationError } from '../../../../shared/errors/domain-error';
 
 const TIPOS_PERMITIDOS = ['application/pdf', 'image/png', 'image/jpeg'];
@@ -29,7 +30,7 @@ export class SubirActaFisicaUseCase {
       throw new ValidationError('El archivo excede el tamaño máximo de 15MB');
     }
 
-    const pathAnterior = this.extraerPathDesdeUrlFirmada(acta.urlActaFisica);
+    const pathAnterior = extraerPathDesdeUrlFirmada(ACTAS_BUCKET, acta.urlActaFisica);
 
     const extension = archivo.mimeType === 'application/pdf' ? 'pdf' : archivo.mimeType.split('/')[1];
     const path = `${actaId}/acta-fisica-${Date.now()}.${extension}`;
@@ -43,15 +44,5 @@ export class SubirActaFisicaUseCase {
     }
 
     return { urlActaFisica: url };
-  }
-
-  private extraerPathDesdeUrlFirmada(url: string | null): string | null {
-    if (!url) return null;
-    const marcador = `/object/sign/${ACTAS_BUCKET}/`;
-    const indice = url.indexOf(marcador);
-    if (indice === -1) return null;
-    const resto = url.slice(indice + marcador.length);
-    const path = resto.split('?')[0];
-    return path ? decodeURIComponent(path) : null;
   }
 }

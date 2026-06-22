@@ -1,7 +1,10 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import { SubirEvidenciaUseCase } from '../../application/use-cases/subir-evidencia.use-case';
 import { ListarEvidenciasUseCase } from '../../application/use-cases/listar-evidencias.use-case';
-import { ValidationError, UnauthorizedError } from '../../../../shared/errors/domain-error';
+import { UnauthorizedError } from '../../../../shared/errors/domain-error';
+
+const subirLinkSchema = z.object({ url: z.string().url() });
 
 export class EvidenciaController {
   constructor(
@@ -11,18 +14,21 @@ export class EvidenciaController {
 
   public subir = async (req: Request, res: Response): Promise<void> => {
     if (!req.user) throw new UnauthorizedError();
-    if (!req.file) {
-      throw new ValidationError('Debes adjuntar un archivo en el campo "archivo"');
-    }
+    const acuerdoId = req.params.id as string;
+    const datosComunes = { acuerdoId, ejecutadoPorId: req.user.id, ejecutadoPorRol: req.user.rol };
 
-    await this.subirEvidencia.execute({
-      acuerdoId: req.params.id as string,
-      archivo: req.file.buffer,
-      mimeType: req.file.mimetype,
-      nombreArchivo: req.file.originalname,
-      ejecutadoPorId: req.user.id,
-      ejecutadoPorRol: req.user.rol,
-    });
+    if (req.file) {
+      await this.subirEvidencia.execute({
+        ...datosComunes,
+        tipo: 'archivo',
+        archivo: req.file.buffer,
+        mimeType: req.file.mimetype,
+        nombreArchivo: req.file.originalname,
+      });
+    } else {
+      const body = subirLinkSchema.parse(req.body);
+      await this.subirEvidencia.execute({ ...datosComunes, tipo: 'link', url: body.url });
+    }
 
     res.status(201).json({ ok: true });
   };

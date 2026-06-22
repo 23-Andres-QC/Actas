@@ -1,11 +1,12 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, Eye, FileCheck2, MapPin, Upload } from 'lucide-react';
+import { CalendarDays, ChevronRight, Eye, FileCheck2, MapPin, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
+import { QrActaModal } from './qr-acta-modal';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
   estrategico: 'Estratégico',
@@ -19,6 +20,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const puedeSubirActaFisica = esSuperAdmin || esAdmin || esConvocador;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subirActaFisica = useSubirActaFisica();
+  const [mostrarQr, setMostrarQr] = useState(false);
 
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-card px-5 py-4 shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
@@ -65,6 +67,16 @@ export function ActaCard({ acta }: { acta: Acta }) {
         <span className="hidden sm:inline">Ver acta</span>
         <ChevronRight className="size-3.5 sm:hidden" />
       </Link>
+
+      <button
+        type="button"
+        title="Ver QR de asistencia"
+        onClick={() => setMostrarQr(true)}
+        className="flex shrink-0 items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary"
+      >
+        <QrCode className="size-3.5" />
+      </button>
+      {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
 
       {/* Acta física */}
       {(acta.urlActaFisica || puedeSubirActaFisica) && (

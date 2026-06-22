@@ -23,6 +23,7 @@ export class AsistenciaController {
       req.user.id,
       body.metodo,
       req.file ? { buffer: req.file.buffer, mimeType: req.file.mimetype } : undefined,
+      body.qrToken,
     );
 
     res.status(201).json({ ok: true, firmaUrl: resultado.firmaUrl });

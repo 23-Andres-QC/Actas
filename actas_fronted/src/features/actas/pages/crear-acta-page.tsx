@@ -10,6 +10,7 @@ import { Textarea } from '../../../components/ui/textarea';
 import { Button } from '../../../components/ui/button';
 import { Proceso, TipoReunion } from '../types';
 import { useAreas } from '../../areas/hooks/use-areas';
+import { useUsuarios } from '../../usuarios/hooks/use-usuarios';
 import { GeminiChat } from '../components/gemini-chat';
 import type { ActaAutocompletado } from '../components/gemini-chat';
 
@@ -31,7 +32,16 @@ export function CrearActaPage() {
   const [horaFin, setHoraFin] = useState('');
   const [objetivo, setObjetivo] = useState('');
   const [agenda, setAgenda] = useState('');
+  const [urlReunion, setUrlReunion] = useState('');
+  const [invitarTodos, setInvitarTodos] = useState(true);
+  const [invitadosIds, setInvitadosIds] = useState<string[]>([]);
   const [chatAbierto, setChatAbierto] = useState(false);
+
+  const { data: usuariosArea } = useUsuarios(areaId || undefined);
+
+  const toggleInvitado = (usuarioId: string) => {
+    setInvitadosIds((prev) => (prev.includes(usuarioId) ? prev.filter((id) => id !== usuarioId) : [...prev, usuarioId]));
+  };
 
   const handleAutocompletar = (datos: ActaAutocompletado) => {
     if (datos.titulo) setTitulo(datos.titulo);
@@ -60,6 +70,8 @@ export function CrearActaPage() {
       horaFin,
       objetivo,
       agenda,
+      urlReunion: urlReunion || undefined,
+      invitadosIds: invitarTodos ? undefined : invitadosIds,
     });
     navigate(`/app/actas/${acta.id}`);
   };
@@ -157,8 +169,53 @@ export function CrearActaPage() {
             <Textarea id="agenda" value={agenda} onChange={(e) => setAgenda(e.target.value)} />
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="urlReunion">URL de la reunión (Zoom, Meet, Teams...)</Label>
+            <Input
+              id="urlReunion"
+              type="url"
+              placeholder="https://meet.google.com/abc-defg-hij"
+              value={urlReunion}
+              onChange={(e) => setUrlReunion(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-border/70 p-4">
+            <Label>Invitados</Label>
+            <div className="flex items-center gap-2">
+              <input
+                id="invitarTodos"
+                type="checkbox"
+                className="size-4 accent-primary"
+                checked={invitarTodos}
+                onChange={(e) => setInvitarTodos(e.target.checked)}
+              />
+              <Label htmlFor="invitarTodos" className="text-sm font-normal">Invitar a todos los del área</Label>
+            </div>
+            {!invitarTodos && (
+              <div className="mt-2 max-h-48 space-y-1.5 overflow-y-auto rounded-lg border border-border/50 p-2">
+                {!areaId && <p className="text-xs text-muted-foreground">Selecciona un área primero.</p>}
+                {areaId && !usuariosArea?.length && <p className="text-xs text-muted-foreground">No hay usuarios en esta área.</p>}
+                {usuariosArea?.map((usuario) => (
+                  <div key={usuario.id} className="flex items-center gap-2">
+                    <input
+                      id={`invitado-${usuario.id}`}
+                      type="checkbox"
+                      className="size-4 accent-primary"
+                      checked={invitadosIds.includes(usuario.id)}
+                      onChange={() => toggleInvitado(usuario.id)}
+                    />
+                    <Label htmlFor={`invitado-${usuario.id}`} className="text-sm font-normal">
+                      {usuario.nombre} <span className="text-muted-foreground">({usuario.email})</span>
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <p className="rounded-xl bg-secondary/55 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
-            Los acuerdos, responsables y asistentes se agregan desde el detalle del acta una vez creada.
+            Los acuerdos y responsables se agregan desde el detalle del acta una vez creada.
           </p>
 
           {crearActa.isError && <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">No se pudo crear el acta. Revisa los datos e intenta nuevamente.</p>}

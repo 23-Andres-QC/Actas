@@ -12,4 +12,6 @@ export const acuerdosApi = {
     formData.append('archivo', archivo);
     return httpClient.post<{ ok: true }>(`/acuerdos/${acuerdoId}/evidencias`, formData);
   },
+  subirEvidenciaLink: (acuerdoId: string, url: string) =>
+    httpClient.post<{ ok: true }>(`/acuerdos/${acuerdoId}/evidencias`, { url }),
 };

@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Loader2, MapPin, Upload, UserX } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, QrCode, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
@@ -12,6 +12,7 @@ import { Button } from '../../../components/ui/button';
 import { SemaforoBadge, ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { Inasistente } from '../../asistencia/types';
+import { QrActaModal } from '../components/qr-acta-modal';
 
 const TIPO_REUNION_LABEL: Record<string, string> = { interna: 'Interna', externa: 'Externa' };
 const PROCESO_LABEL: Record<string, string> = { estrategico: 'Estratégico', operativo: 'Operativo', soporte: 'Soporte' };
@@ -23,6 +24,7 @@ export function ActaDetallePage() {
   const { esSuperAdmin, esAdmin, esConvocador } = useRol();
   const puedeVerInasistentes = esSuperAdmin || esAdmin || esConvocador;
   const [descargando, setDescargando] = useState(false);
+  const [mostrarQr, setMostrarQr] = useState(false);
 
   if (isLoading) return <div className="h-[70vh] animate-pulse rounded-2xl border bg-card" />;
   if (isError || !acta) return <Card className="p-8 text-center text-sm font-medium text-destructive">No se pudo cargar el acta.</Card>;
@@ -56,15 +58,31 @@ export function ActaDetallePage() {
             <h1 className="font-display text-2xl font-bold tracking-tight">Acta virtual</h1>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">Vista oficial para consulta y descarga.</p>
+          {acta.urlReunion && (
+            <a
+              href={acta.urlReunion}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+            >
+              <Link2 className="size-4" /> Unirse a la reunión
+            </a>
+          )}
         </div>
-        <div className="rounded-2xl border bg-card p-2 shadow-card">
-          <Button variant="hero" size="lg" onClick={descargarWord} disabled={descargando}>
-            {descargando ? <Loader2 className="animate-spin" /> : <Download />}
-            {descargando ? 'Preparando documento...' : 'Descargar Word'}
+        <div className="flex items-start gap-2">
+          <div className="rounded-2xl border bg-card p-2 shadow-card">
+            <Button variant="hero" size="lg" onClick={descargarWord} disabled={descargando}>
+              {descargando ? <Loader2 className="animate-spin" /> : <Download />}
+              {descargando ? 'Preparando documento...' : 'Descargar Word'}
+            </Button>
+            <p className="px-2 pt-1.5 text-center text-[10px] text-muted-foreground">Documento editable .docx</p>
+          </div>
+          <Button variant="outline" size="lg" onClick={() => setMostrarQr(true)} title="Ver QR de asistencia">
+            <QrCode />
           </Button>
-          <p className="px-2 pt-1.5 text-center text-[10px] text-muted-foreground">Documento editable .docx</p>
         </div>
       </div>
+      {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
 
       <div className="rounded-3xl border border-border/70 bg-slate-200/65 p-3 shadow-inner sm:p-6 lg:p-10">
         <article className="mx-auto min-h-[760px] max-w-4xl bg-white px-5 py-8 text-slate-800 shadow-xl sm:px-10 sm:py-12 lg:px-16">

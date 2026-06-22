@@ -18,11 +18,13 @@ export class ListarActasUseCase {
   public async execute(input: ListarActasInput): Promise<ActaResponseDTO[]> {
     let areaId = input.areaId;
 
-    // Un Admin solo puede ver actas de su propia área, sin importar lo que pida por query param.
-    // El área se resuelve siempre desde Postgres (fuente de verdad), nunca desde el JWT.
-    if (input.ejecutadoPorRol === 'admin') {
+    // Solo SuperAdmin ve actas de cualquier área; todos los demás quedan forzados a la suya,
+    // sin importar lo que pidan por query param. El área se resuelve siempre desde Postgres
+    // (fuente de verdad), nunca desde el JWT.
+    if (input.ejecutadoPorRol !== 'superadmin') {
       const usuario = await this.usuarioRepository.findById(input.ejecutadoPorId);
-      areaId = usuario?.areaId ?? undefined;
+      if (!usuario?.areaId) return [];
+      areaId = usuario.areaId;
     }
 
     const actas = await this.actaRepository.findAll({ areaId });

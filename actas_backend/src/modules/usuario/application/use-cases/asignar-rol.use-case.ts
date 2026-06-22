@@ -30,6 +30,13 @@ export class AsignarRolUseCase {
       throw new NotFoundError('Usuario', input.usuarioObjetivoId);
     }
 
+    if (input.ejecutadoPorRol === 'admin') {
+      const ejecutor = await this.usuarioRepository.findById(input.ejecutadoPorId);
+      if (!ejecutor?.areaId || ejecutor.areaId !== usuario.areaId) {
+        throw new ForbiddenError('Solo puedes asignar el rol de Convocador a usuarios de tu propia área');
+      }
+    }
+
     usuario.cambiarRol(Rol.create(input.nuevoRol));
     await this.usuarioRepository.save(usuario);
 

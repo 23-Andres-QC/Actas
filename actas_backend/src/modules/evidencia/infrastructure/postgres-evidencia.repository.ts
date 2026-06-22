@@ -1,11 +1,13 @@
 import { Pool } from 'pg';
 import { EvidenciaRepository } from '../domain/evidencia.repository';
-import { Evidencia } from '../domain/evidencia.entity';
+import { Evidencia, TipoEvidencia } from '../domain/evidencia.entity';
 
 interface EvidenciaRow {
   id: string;
   acuerdo_id: string;
   url_archivo: string;
+  tipo: TipoEvidencia;
+  fecha_subida: Date;
 }
 
 export class PostgresEvidenciaRepository implements EvidenciaRepository {
@@ -17,14 +19,17 @@ export class PostgresEvidenciaRepository implements EvidenciaRepository {
       [acuerdoId],
     );
     return result.rows.map((row) =>
-      Evidencia.subir({ acuerdoId: row.acuerdo_id, urlArchivo: row.url_archivo }, row.id),
+      Evidencia.reconstruir(
+        { acuerdoId: row.acuerdo_id, urlArchivo: row.url_archivo, tipo: row.tipo, fechaSubida: row.fecha_subida },
+        row.id,
+      ),
     );
   }
 
   public async save(evidencia: Evidencia): Promise<void> {
     await this.pool.query(
-      'insert into evidencia_acuerdo (id, acuerdo_id, url_archivo, fecha_subida) values ($1, $2, $3, $4)',
-      [evidencia.id, evidencia.acuerdoId, evidencia.urlArchivo, evidencia.fechaSubida],
+      'insert into evidencia_acuerdo (id, acuerdo_id, url_archivo, tipo, fecha_subida) values ($1, $2, $3, $4, $5)',
+      [evidencia.id, evidencia.acuerdoId, evidencia.urlArchivo, evidencia.tipo, evidencia.fechaSubida],
     );
   }
 }

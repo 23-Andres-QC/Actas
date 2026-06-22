@@ -19,8 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.actas.ActasApplication
-import com.example.actas.data.remote.RetrofitClient
-import com.example.actas.data.remote.dto.SupabaseLoginRequest
+import com.example.actas.data.remote.dto.BackendLoginRequest
 import com.example.actas.ui.theme.BrandAccent
 import com.example.actas.ui.theme.BrandPrimary
 import kotlinx.coroutines.launch
@@ -46,16 +45,13 @@ fun LoginScreen(onLoginSuccess: () -> Unit) {
         loading = true
         scope.launch {
             try {
-                val response = RetrofitClient.supabaseAuthApi.login(
-                    body = SupabaseLoginRequest(email.trim(), password),
-                )
-                val rol = response.user.appMetadata.rol ?: "asistente"
+                val response = app.backendApi.login(BackendLoginRequest(email.trim(), password))
                 app.sessionManager.guardarSesion(
-                    accessToken = response.accessToken,
-                    refreshToken = response.refreshToken,
-                    userId = response.user.id,
-                    email = response.user.email,
-                    rol = rol,
+                    accessToken = response.token,
+                    refreshToken = "",
+                    userId = response.usuario.id,
+                    email = response.usuario.email,
+                    rol = response.usuario.rol,
                 )
                 loading = false
                 onLoginSuccess()

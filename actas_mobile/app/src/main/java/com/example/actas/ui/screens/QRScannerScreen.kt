@@ -32,7 +32,7 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun QRScannerScreen(
-    onQRScanned: (String) -> Unit,
+    onQRScanned: (actaId: String, qrToken: String) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -97,9 +97,10 @@ fun QRScannerScreen(
                             if (yaEscaneado) return@MlKitAnalyzer
                             val barcodes = result?.getValue(barcodeScanner)
                             val valor = barcodes?.firstOrNull()?.rawValue
-                            if (!valor.isNullOrBlank()) {
+                            val partes = valor?.split(":", limit = 2)
+                            if (partes != null && partes.size == 2 && partes[0].isNotBlank() && partes[1].isNotBlank()) {
                                 yaEscaneado = true
-                                onQRScanned(valor)
+                                onQRScanned(partes[0], partes[1])
                             }
                         },
                     )

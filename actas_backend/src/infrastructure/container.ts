@@ -7,8 +7,12 @@ import { AsignarRolUseCase } from '../modules/usuario/application/use-cases/asig
 import { AsignarAreaUseCase } from '../modules/usuario/application/use-cases/asignar-area.use-case';
 import { CrearUsuarioUseCase } from '../modules/usuario/application/use-cases/crear-usuario.use-case';
 import { AutenticarUsuarioUseCase } from '../modules/usuario/application/use-cases/autenticar-usuario.use-case';
+import { GuardarFirmaUsuarioUseCase } from '../modules/usuario/application/use-cases/guardar-firma-usuario.use-case';
+import { ObtenerFirmaUsuarioUseCase } from '../modules/usuario/application/use-cases/obtener-firma-usuario.use-case';
+import { PostgresFirmaUsuarioRepository } from '../modules/usuario/infrastructure/postgres-firma-usuario.repository';
 import { UsuarioController } from '../modules/usuario/interfaces/http/usuario.controller';
 import { AuthController } from '../modules/usuario/interfaces/http/auth.controller';
+import { FirmaUsuarioController } from '../modules/usuario/interfaces/http/firma-usuario.controller';
 
 // Acta
 import { PostgresActaRepository } from '../modules/acta/infrastructure/postgres-acta.repository';
@@ -58,6 +62,8 @@ import { AreaController } from '../modules/area/interfaces/http/area.controller'
  * nunca instancian directamente sus dependencias de infraestructura.
  */
 export function buildContainer(pool: Pool) {
+  const storage = new SupabaseStorageAdapter();
+
   const areaRepository = new PostgresAreaRepository(pool);
   const areaController = new AreaController(new ListarAreasUseCase(areaRepository), new CrearAreaUseCase(areaRepository));
   const usuarioRepository = new PostgresUsuarioRepository(pool);
@@ -69,13 +75,18 @@ export function buildContainer(pool: Pool) {
   );
   const authController = new AuthController(new AutenticarUsuarioUseCase(usuarioRepository));
 
+  const firmaUsuarioRepository = new PostgresFirmaUsuarioRepository(pool);
+  const firmaUsuarioController = new FirmaUsuarioController(
+    new GuardarFirmaUsuarioUseCase(firmaUsuarioRepository, storage),
+    new ObtenerFirmaUsuarioUseCase(firmaUsuarioRepository),
+  );
+
   const actaRepository = new PostgresActaRepository(pool);
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
   const acuerdoRepository = new PostgresAcuerdoRepository(pool);
-  const storage = new SupabaseStorageAdapter();
   const asistentesFirmadosProviderForActa = new PostgresAsistentesFirmadosProvider(pool);
   const actaController = new ActaController(
-    new CrearActaUseCase(actaRepository),
+    new CrearActaUseCase(actaRepository, usuarioRepository),
     new ListarActasUseCase(actaRepository, usuarioRepository),
     new ObtenerActaUseCase(actaRepository, usuarioRepository),
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
@@ -96,7 +107,7 @@ export function buildContainer(pool: Pool) {
   const asistentesFirmadosProvider = new PostgresAsistentesFirmadosProvider(pool);
   const inasistenteRepository = new PostgresInasistenteRepository(pool);
   const asistenciaController = new AsistenciaController(
-    new RegistrarAsistenciaUseCase(asistenciaRepository, storage),
+    new RegistrarAsistenciaUseCase(asistenciaRepository, storage, actaRepository),
     new ListarInasistentesUseCase(inasistentesProvider),
     new SubirEvidenciaInasistenciaUseCase(inasistenteRepository, storage),
     new ListarAsistentesFirmadosUseCase(asistentesFirmadosProvider),
@@ -110,6 +121,7 @@ export function buildContainer(pool: Pool) {
 
   return {
     usuarioController,
+    firmaUsuarioController,
     authController,
     areaController,
     actaController,

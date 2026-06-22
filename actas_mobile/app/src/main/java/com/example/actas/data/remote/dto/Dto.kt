@@ -1,28 +1,21 @@
 package com.example.actas.data.remote.dto
 
-import com.google.gson.annotations.SerializedName
+// --- Backend: autenticación ---
+// El login se hace contra NUESTRO backend (tabla usuario, JWT propio), no contra Supabase Auth:
+// Supabase Auth es un store de usuarios totalmente separado de la tabla `usuario` de Postgres,
+// y el authMiddleware del backend solo acepta JWT firmados con JWT_SECRET (no tokens de Supabase).
 
-// --- Supabase Auth ---
+data class BackendLoginRequest(val email: String, val password: String)
 
-data class SupabaseLoginRequest(val email: String, val password: String)
+data class BackendLoginResponse(val token: String, val usuario: BackendUsuarioDto)
 
-data class SupabaseLoginResponse(
-    @SerializedName("access_token") val accessToken: String,
-    @SerializedName("refresh_token") val refreshToken: String,
-    val user: SupabaseUser,
-)
-
-data class SupabaseUser(
+data class BackendUsuarioDto(
     val id: String,
+    val nombre: String,
     val email: String,
-    @SerializedName("app_metadata") val appMetadata: SupabaseAppMetadata,
-)
-
-data class SupabaseAppMetadata(val rol: String?)
-
-data class SupabaseErrorResponse(
-    @SerializedName("error_description") val errorDescription: String?,
-    val msg: String?,
+    val rol: String,
+    val areaId: String?,
+    val cargo: String?,
 )
 
 // --- Backend: mis acuerdos ---
@@ -42,6 +35,18 @@ data class AcuerdoDto(
 // --- Backend: asistencia ---
 
 data class AsistenciaResponse(val ok: Boolean, val firmaUrl: String?)
+
+// --- Backend: firma reutilizable del usuario ---
+
+data class FirmaResponse(val firmaUrl: String?)
+
+// --- actas_face_service: reconocimiento facial (microservicio aparte) ---
+
+data class EnrolarRostroResponse(val enrolado: Boolean)
+
+data class VerificarRostroResponse(val coincide: Boolean, val similitud: Double)
+
+data class EstadoRostroResponse(val enrolado: Boolean)
 
 // --- Backend: evidencia ---
 

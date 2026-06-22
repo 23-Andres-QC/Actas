@@ -41,3 +41,11 @@ export function useSubirEvidenciaAcuerdo(acuerdoId: string) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias', acuerdoId] }),
   });
 }
+
+export function useSubirEvidenciaLinkAcuerdo(acuerdoId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string) => acuerdosApi.subirEvidenciaLink(acuerdoId, url),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias', acuerdoId] }),
+  });
+}

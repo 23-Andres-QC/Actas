@@ -17,6 +17,8 @@ export interface ActaResponseDTO {
   agenda: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
+  urlReunion: string | null;
+  qrToken: string;
   porcentajeAvance: number;
 }
 
@@ -33,6 +35,8 @@ export interface CrearActaDTO {
   horaFin: string;
   objetivo: string;
   agenda: string;
+  urlReunion?: string | null;
+  invitadosIds?: string[];
 }
 
 export function toActaResponseDTO(acta: Acta, convocadorNombre?: string): ActaResponseDTO {
@@ -53,6 +57,8 @@ export function toActaResponseDTO(acta: Acta, convocadorNombre?: string): ActaRe
     agenda: acta.agenda,
     urlGrabacion: acta.urlGrabacion,
     urlActaFisica: acta.urlActaFisica,
+    urlReunion: acta.urlReunion,
+    qrToken: acta.qrToken,
     porcentajeAvance: acta.porcentajeAvance.value,
   };
 }

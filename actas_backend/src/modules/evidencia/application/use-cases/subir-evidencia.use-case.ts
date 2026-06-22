@@ -11,14 +11,15 @@ const TIPOS_PERMITIDOS = ['image/png', 'image/jpeg', 'application/pdf', 'video/m
 const TAMANO_MAXIMO_BYTES = 25 * 1024 * 1024; // 25 MB
 const ROLES_SUPERVISORES: Rol[] = ['superadmin', 'admin', 'convocador'];
 
-interface SubirEvidenciaInput {
+interface DatosComunes {
   acuerdoId: string;
-  archivo: Buffer;
-  mimeType: string;
-  nombreArchivo: string;
   ejecutadoPorId: string;
   ejecutadoPorRol: Rol;
 }
+
+type SubirEvidenciaInput =
+  | (DatosComunes & { tipo: 'archivo'; archivo: Buffer; mimeType: string; nombreArchivo: string })
+  | (DatosComunes & { tipo: 'link'; url: string });
 
 export class SubirEvidenciaUseCase {
   constructor(
@@ -38,17 +39,21 @@ export class SubirEvidenciaUseCase {
       throw new ForbiddenError('Solo el responsable del acuerdo o un supervisor pueden subir evidencia');
     }
 
-    if (!TIPOS_PERMITIDOS.includes(input.mimeType)) {
-      throw new ValidationError(`Tipo de archivo no permitido: ${input.mimeType}`);
-    }
-    if (input.archivo.byteLength > TAMANO_MAXIMO_BYTES) {
-      throw new ValidationError('El archivo excede el tamaño máximo de 25MB');
+    let url: string;
+    if (input.tipo === 'link') {
+      url = input.url;
+    } else {
+      if (!TIPOS_PERMITIDOS.includes(input.mimeType)) {
+        throw new ValidationError(`Tipo de archivo no permitido: ${input.mimeType}`);
+      }
+      if (input.archivo.byteLength > TAMANO_MAXIMO_BYTES) {
+        throw new ValidationError('El archivo excede el tamaño máximo de 25MB');
+      }
+      const path = `${input.acuerdoId}/${randomUUID()}-${input.nombreArchivo}`;
+      url = await this.storage.subirArchivo(EVIDENCIAS_BUCKET, path, input.archivo, input.mimeType);
     }
 
-    const path = `${input.acuerdoId}/${randomUUID()}-${input.nombreArchivo}`;
-    const url = await this.storage.subirArchivo(EVIDENCIAS_BUCKET, path, input.archivo, input.mimeType);
-
-    const evidencia = Evidencia.subir({ acuerdoId: input.acuerdoId, urlArchivo: url }, randomUUID());
+    const evidencia = Evidencia.subir({ acuerdoId: input.acuerdoId, urlArchivo: url, tipo: input.tipo }, randomUUID());
     await this.evidenciaRepository.save(evidencia);
   }
 }

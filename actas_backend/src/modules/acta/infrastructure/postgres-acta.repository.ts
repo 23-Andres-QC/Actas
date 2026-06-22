@@ -19,6 +19,8 @@ interface ActaRow {
   agenda: string;
   url_grabacion: string | null;
   url_acta_fisica: string | null;
+  url_reunion: string | null;
+  qr_token: string;
   porcentaje_avance: string;
 }
 
@@ -39,6 +41,8 @@ function toDomain(row: ActaRow): Acta {
       agenda: row.agenda,
       urlGrabacion: row.url_grabacion,
       urlActaFisica: row.url_acta_fisica,
+      urlReunion: row.url_reunion,
+      qrToken: row.qr_token,
       porcentajeAvance: PorcentajeAvance.create(Number(row.porcentaje_avance)),
     },
     row.id,
@@ -71,14 +75,14 @@ export class PostgresActaRepository implements ActaRepository {
       `insert into acta (
          id, area_id, convocador_id, titulo, fecha, formato,
          tipo_reunion, proceso, lugar, hora_inicio, hora_fin, objetivo, agenda,
-         url_grabacion, url_acta_fisica, porcentaje_avance
+         url_grabacion, url_acta_fisica, url_reunion, qr_token, porcentaje_avance
        )
-       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        on conflict (id) do update set
          titulo = $4, fecha = $5, formato = $6,
          tipo_reunion = $7, proceso = $8, lugar = $9, hora_inicio = $10, hora_fin = $11,
          objetivo = $12, agenda = $13,
-         url_grabacion = $14, url_acta_fisica = $15, porcentaje_avance = $16`,
+         url_grabacion = $14, url_acta_fisica = $15, url_reunion = $16, qr_token = $17, porcentaje_avance = $18`,
       [
         acta.id,
         acta.areaId,
@@ -95,8 +99,17 @@ export class PostgresActaRepository implements ActaRepository {
         acta.agenda,
         acta.urlGrabacion,
         acta.urlActaFisica,
+        acta.urlReunion,
+        acta.qrToken,
         acta.porcentajeAvance.value,
       ],
     );
+  }
+
+  public async guardarInvitados(actaId: string, usuarioIds: string[]): Promise<void> {
+    await this.pool.query('delete from acta_invitado where acta_id = $1', [actaId]);
+    if (usuarioIds.length === 0) return;
+    const values = usuarioIds.map((_, i) => `($1, $${i + 2})`).join(', ');
+    await this.pool.query(`insert into acta_invitado (acta_id, usuario_id) values ${values}`, [actaId, ...usuarioIds]);
   }
 }

@@ -50,15 +50,20 @@ private enum class ModoFirma { DIBUJAR, IMAGEN }
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun SignatureScreen(
-    actaId: String,
+    actaId: String? = null,
+    metodo: String? = null,
+    qrToken: String? = null,
     onSignatureSaved: () -> Unit,
     onBack: () -> Unit,
 ) {
+    val modoSoloFirma = actaId == null
     val context = LocalContext.current
     val app = context.applicationContext as ActasApplication
     val scope = rememberCoroutineScope()
 
     var modo by remember { mutableStateOf(ModoFirma.DIBUJAR) }
+    var guardandoFirma by remember { mutableStateOf(false) }
+    var firmaGuardadaOk by remember { mutableStateOf(false) }
     val paths = remember { mutableStateListOf<Path>() }
     var currentPath by remember { mutableStateOf<Path?>(null) }
     var canvasSize by remember { mutableStateOf(IntSize(800, 400)) }
@@ -68,6 +73,17 @@ fun SignatureScreen(
 
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         imagenSeleccionada = uri
+    }
+
+    LaunchedEffect(Unit) {
+        if (modoSoloFirma) {
+            app.firmaCache.leer()?.let { bytes ->
+                val archivoTemp = java.io.File(context.cacheDir, "firma_actual_preview.png")
+                withContext(Dispatchers.IO) { archivoTemp.writeBytes(bytes) }
+                modo = ModoFirma.IMAGEN
+                imagenSeleccionada = Uri.fromFile(archivoTemp)
+            }
+        }
     }
 
     fun pathsABytes(): ByteArray {
@@ -91,36 +107,36 @@ fun SignatureScreen(
         return out.toByteArray()
     }
 
+    suspend fun firmaActualABytes(): ByteArray {
+        if (modo == ModoFirma.DIBUJAR) {
+            if (paths.isEmpty()) throw IllegalStateException("Dibuja tu firma antes de continuar.")
+            return withContext(Dispatchers.Default) { pathsABytes() }
+        }
+        val uri = imagenSeleccionada ?: throw IllegalStateException("Selecciona una imagen de tu firma.")
+        return withContext(Dispatchers.Default) {
+            context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                ?: throw IllegalStateException("No se pudo leer la imagen")
+        }
+    }
+
     fun guardar() {
-        if (modo == ModoFirma.DIBUJAR && paths.isEmpty()) {
-            error = "Dibuja tu firma antes de continuar."
-            return
-        }
-        if (modo == ModoFirma.IMAGEN && imagenSeleccionada == null) {
-            error = "Selecciona una imagen de tu firma."
-            return
-        }
+        if (actaId == null || metodo == null) return
         error = null
         guardando = true
         scope.launch {
             try {
-                val bytes = withContext(Dispatchers.Default) {
-                    if (modo == ModoFirma.DIBUJAR) {
-                        pathsABytes()
-                    } else {
-                        context.contentResolver.openInputStream(imagenSeleccionada!!)?.use { it.readBytes() }
-                            ?: throw IllegalStateException("No se pudo leer la imagen")
-                    }
-                }
-
+                val bytes = firmaActualABytes()
                 val firmaPart = MultipartBody.Part.createFormData(
                     "firma", "firma.png", bytes.toRequestBody("image/png".toMediaTypeOrNull()),
                 )
                 val metodoPart = MultipartBody.Part.createFormData(
-                    "metodo", "", "firma_facial".toRequestBody("text/plain".toMediaTypeOrNull()),
+                    "metodo", "", metodo.toRequestBody("text/plain".toMediaTypeOrNull()),
                 )
+                val qrTokenPart = qrToken?.let {
+                    MultipartBody.Part.createFormData("qrToken", "", it.toRequestBody("text/plain".toMediaTypeOrNull()))
+                }
 
-                app.backendApi.registrarAsistencia(actaId, metodoPart, firmaPart)
+                app.backendApi.registrarAsistencia(actaId, metodoPart, firmaPart, qrTokenPart)
                 guardando = false
                 onSignatureSaved()
             } catch (e: Exception) {
@@ -131,16 +147,42 @@ fun SignatureScreen(
         }
     }
 
+    fun guardarFirmaParaFuturasActas() {
+        error = null
+        guardandoFirma = true
+        firmaGuardadaOk = false
+        scope.launch {
+            try {
+                val bytes = firmaActualABytes()
+                val firmaPart = MultipartBody.Part.createFormData(
+                    "firma", "firma.png", bytes.toRequestBody("image/png".toMediaTypeOrNull()),
+                )
+                app.backendApi.guardarFirma(firmaPart)
+                app.firmaCache.guardar(bytes)
+                guardandoFirma = false
+                firmaGuardadaOk = true
+            } catch (e: Exception) {
+                Log.e("SignatureScreen", "Error guardando firma reutilizable", e)
+                guardandoFirma = false
+                error = mensajeDeErrorRed(e)
+            }
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registrar firma") },
+                title = { Text(if (modoSoloFirma) "Mi firma" else "Registrar firma") },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver") } },
             )
         },
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
-            Text("Confirma tu asistencia firmando a continuación", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                if (modoSoloFirma) "Dibuja o sube tu firma para reutilizarla en futuras actas" else "Confirma tu asistencia firmando a continuación",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
             Spacer(Modifier.height(12.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -221,21 +263,46 @@ fun SignatureScreen(
                 Spacer(Modifier.height(8.dp))
                 Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             }
+            if (firmaGuardadaOk) {
+                Spacer(Modifier.height(8.dp))
+                Text("Firma guardada para futuras actas.", color = Color(0xFF16A34A), style = MaterialTheme.typography.bodyMedium)
+            }
 
             Spacer(Modifier.height(16.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 OutlinedButton(
                     onClick = {
                         if (modo == ModoFirma.DIBUJAR) { paths.clear(); currentPath = null } else { imagenSeleccionada = null }
+                        firmaGuardadaOk = false
                     },
-                    enabled = !guardando,
+                    enabled = !guardando && !guardandoFirma,
                 ) { Text("Limpiar") }
 
-                Button(onClick = { guardar() }, enabled = !guardando) {
-                    if (guardando) {
-                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-                    } else {
-                        Text("Confirmar asistencia")
+                if (modoSoloFirma) {
+                    Button(onClick = { guardarFirmaParaFuturasActas() }, enabled = !guardandoFirma) {
+                        if (guardandoFirma) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Text("Guardar firma")
+                        }
+                    }
+                } else {
+                    OutlinedButton(onClick = { guardarFirmaParaFuturasActas() }, enabled = !guardando && !guardandoFirma) {
+                        if (guardandoFirma) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Text("Guardar firma")
+                        }
+                    }
+                }
+
+                if (!modoSoloFirma) {
+                    Button(onClick = { guardar() }, enabled = !guardando && !guardandoFirma) {
+                        if (guardando) {
+                            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Text("Confirmar asistencia")
+                        }
                     }
                 }
             }

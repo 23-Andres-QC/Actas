@@ -1,6 +1,6 @@
 import { Entity } from '../../../shared/kernel/entity';
 
-export type MetodoAsistencia = 'qr' | 'firma_facial';
+export type MetodoAsistencia = 'qr' | 'firma_facial' | 'biometrico';
 
 interface AsistenciaProps {
   actaId: string;

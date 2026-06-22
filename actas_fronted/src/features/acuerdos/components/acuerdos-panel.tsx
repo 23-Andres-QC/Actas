@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { CheckCircle2, Circle, Loader2, PlusCircle } from 'lucide-react';
+import { CheckCircle2, Circle, FileSearch, Loader2, PlusCircle } from 'lucide-react';
 import { useCrearAcuerdo, useAcuerdosPorActa, useActualizarAvanceAcuerdo } from '../hooks/use-acuerdos';
 import { useUsuarios } from '../../usuarios/hooks/use-usuarios';
 import { Card } from '../../../components/ui/card';
@@ -8,6 +8,7 @@ import { Input } from '../../../components/ui/input';
 import { Label } from '../../../components/ui/label';
 import { Textarea } from '../../../components/ui/textarea';
 import { Badge } from '../../../components/ui/badge';
+import { EvidenciasModal } from './evidencias-modal';
 
 const selectClass =
   'flex h-11 w-full rounded-xl border border-input bg-background px-3.5 py-2 text-sm shadow-sm transition-all hover:border-accent/60 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30';
@@ -26,6 +27,7 @@ export function AcuerdosPanel({ actaId }: Props) {
   const [descripcion, setDescripcion] = useState('');
   const [responsableId, setResponsableId] = useState('');
   const [fechaFin, setFechaFin] = useState('');
+  const [acuerdoEvidencias, setAcuerdoEvidencias] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -134,6 +136,7 @@ export function AcuerdosPanel({ actaId }: Props) {
                   <th className="px-4 py-3">Responsable</th>
                   <th className="px-4 py-3">Fecha límite</th>
                   <th className="px-4 py-3 text-center">Cumplido</th>
+                  <th className="px-4 py-3 text-center">Evidencias</th>
                 </tr>
               </thead>
               <tbody>
@@ -165,6 +168,11 @@ export function AcuerdosPanel({ actaId }: Props) {
                           )}
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-center">
+                        <Button type="button" variant="outline" size="sm" onClick={() => setAcuerdoEvidencias(acuerdo.id)}>
+                          <FileSearch className="size-3.5" /> Ver
+                        </Button>
+                      </td>
                     </tr>
                   );
                 })}
@@ -172,6 +180,10 @@ export function AcuerdosPanel({ actaId }: Props) {
             </table>
           </div>
         </Card>
+      )}
+
+      {acuerdoEvidencias && (
+        <EvidenciasModal acuerdoId={acuerdoEvidencias} onClose={() => setAcuerdoEvidencias(null)} />
       )}
     </div>
   );

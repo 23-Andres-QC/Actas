@@ -17,6 +17,8 @@ export interface Acta {
   agenda: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
+  urlReunion: string | null;
+  qrToken: string;
   porcentajeAvance: number;
 }
 
@@ -32,4 +34,6 @@ export interface CrearActaInput {
   horaFin: string;
   objetivo: string;
   agenda: string;
+  urlReunion?: string;
+  invitadosIds?: string[];
 }

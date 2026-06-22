@@ -43,7 +43,7 @@ export function createServer(pool: Pool): Express {
 
   app.use('/api/v1/auth', authRoutes(container.authController));
   app.use('/api/v1/areas', areaRoutes(container.areaController));
-  app.use('/api/v1/usuarios', usuarioRoutes(container.usuarioController));
+  app.use('/api/v1/usuarios', usuarioRoutes(container.usuarioController, container.firmaUsuarioController));
   app.use('/api/v1/actas', actaRoutes(container.actaController));
   app.use('/api/v1/actas/:actaId/acuerdos', acuerdoNestedRoutes(container.acuerdoController));
   app.use('/api/v1/acuerdos', acuerdoRoutes(container.acuerdoController));

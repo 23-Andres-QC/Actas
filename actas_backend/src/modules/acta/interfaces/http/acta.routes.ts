@@ -12,7 +12,7 @@ export function actaRoutes(controller: ActaController): Router {
 
   router.use(asyncHandler(authMiddleware));
 
-  router.post('/', requireRole('superadmin', 'convocador'), asyncHandler(controller.crear));
+  router.post('/', requireRole('superadmin', 'admin', 'convocador'), asyncHandler(controller.crear));
   router.get('/', asyncHandler(controller.listar));
   router.get('/:id', asyncHandler(controller.detalle));
   router.get('/:id/avance', asyncHandler(controller.avance));
