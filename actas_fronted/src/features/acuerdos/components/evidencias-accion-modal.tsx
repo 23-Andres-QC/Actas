@@ -1,13 +1,13 @@
 import { FormEvent, useRef, useState } from 'react';
 import { File as FileIcon, Link as LinkIcon, Loader2, Upload, X } from 'lucide-react';
-import { useEvidenciasAcuerdo, useSubirEvidenciaAcuerdo, useSubirEvidenciaLinkAcuerdo } from '../hooks/use-acuerdos';
+import { useEvidenciasAccion, useSubirEvidenciaAccion, useSubirEvidenciaAccionLink } from '../hooks/use-acuerdos';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 
-export function EvidenciasModal({ acuerdoId, onClose }: { acuerdoId: string; onClose: () => void }) {
-  const { data: evidencias, isLoading } = useEvidenciasAcuerdo(acuerdoId);
-  const subirArchivo = useSubirEvidenciaAcuerdo(acuerdoId);
-  const subirLink = useSubirEvidenciaLinkAcuerdo(acuerdoId);
+export function EvidenciasAccionModal({ accionId, onClose }: { accionId: string; onClose: () => void }) {
+  const { data: evidencias, isLoading } = useEvidenciasAccion(accionId);
+  const subirArchivo = useSubirEvidenciaAccion(accionId);
+  const subirLink = useSubirEvidenciaAccionLink(accionId);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [modo, setModo] = useState<'archivo' | 'link'>('archivo');
@@ -29,7 +29,7 @@ export function EvidenciasModal({ acuerdoId, onClose }: { acuerdoId: string; onC
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-base font-semibold text-foreground">Evidencias del acuerdo</h3>
+          <h3 className="font-display text-base font-semibold text-foreground">Evidencias de la acción</h3>
           <button type="button" onClick={onClose} className="rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
             <X className="size-4" />
           </button>

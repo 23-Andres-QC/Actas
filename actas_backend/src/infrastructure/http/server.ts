@@ -13,6 +13,8 @@ import { actaRoutes } from '../../modules/acta/interfaces/http/acta.routes';
 import { acuerdoNestedRoutes, acuerdoRoutes } from '../../modules/acuerdo/interfaces/http/acuerdo.routes';
 import { asistenciaRoutes } from '../../modules/asistencia/interfaces/http/asistencia.routes';
 import { evidenciaRoutes } from '../../modules/evidencia/interfaces/http/evidencia.routes';
+import { accionNestedRoutes, accionRoutes } from '../../modules/accion/interfaces/http/accion.routes';
+import { evidenciaAccionRoutes } from '../../modules/evidencia-accion/interfaces/http/evidencia-accion.routes';
 import { areaRoutes } from '../../modules/area/interfaces/http/area.routes';
 
 export function createServer(pool: Pool): Express {
@@ -48,6 +50,9 @@ export function createServer(pool: Pool): Express {
   app.use('/api/v1/actas/:actaId/acuerdos', acuerdoNestedRoutes(container.acuerdoController));
   app.use('/api/v1/acuerdos', acuerdoRoutes(container.acuerdoController));
   app.use('/api/v1/acuerdos/:id/evidencias', evidenciaRoutes(container.evidenciaController));
+  app.use('/api/v1/acuerdos/:acuerdoId/acciones', accionNestedRoutes(container.accionController));
+  app.use('/api/v1/acciones/:id/evidencias', evidenciaAccionRoutes(container.evidenciaAccionController));
+  app.use('/api/v1/acciones', accionRoutes(container.accionController));
   app.use('/api/v1/actas/:actaId/asistencia', asistenciaRoutes(container.asistenciaController));
 
   app.use(errorHandlerMiddleware);

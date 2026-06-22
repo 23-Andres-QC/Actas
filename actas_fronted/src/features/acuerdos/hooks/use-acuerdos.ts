@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { acuerdosApi } from '../api/acuerdos.api';
-import { CrearAcuerdoInput } from '../types';
+import { CrearAccionInput, CrearAcuerdoInput } from '../types';
 
 export function useAcuerdosPorActa(actaId: string) {
   return useQuery({
@@ -18,34 +18,58 @@ export function useCrearAcuerdo(actaId: string) {
   });
 }
 
-export function useEvidenciasAcuerdo(acuerdoId: string) {
-  return useQuery({ queryKey: ['evidencias', acuerdoId], queryFn: () => acuerdosApi.listarEvidencias(acuerdoId), enabled: Boolean(acuerdoId) });
-}
-
-export function useActualizarAvanceAcuerdo(actaId: string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, porcentajeAvance }: { id: string; porcentajeAvance: number }) =>
-      acuerdosApi.actualizarAvance(id, porcentajeAvance),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['acuerdos', actaId] });
-      queryClient.invalidateQueries({ queryKey: ['actas'] });
-    },
+export function useAccionesPorAcuerdo(acuerdoId: string) {
+  return useQuery({
+    queryKey: ['acciones', acuerdoId],
+    queryFn: () => acuerdosApi.listarAcciones(acuerdoId),
+    enabled: Boolean(acuerdoId),
   });
 }
 
-export function useSubirEvidenciaAcuerdo(acuerdoId: string) {
+/** Crear/completar acciones recalcula en cascada el % del acuerdo y del acta (ver backend). */
+function invalidarCascadaAvance(queryClient: ReturnType<typeof useQueryClient>, acuerdoId: string) {
+  queryClient.invalidateQueries({ queryKey: ['acciones', acuerdoId] });
+  queryClient.invalidateQueries({ queryKey: ['acuerdos'] });
+  queryClient.invalidateQueries({ queryKey: ['actas'] });
+}
+
+export function useCrearAccion(acuerdoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (archivo: File) => acuerdosApi.subirEvidencia(acuerdoId, archivo),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias', acuerdoId] }),
+    mutationFn: (input: CrearAccionInput) => acuerdosApi.crearAccion(acuerdoId, input),
+    onSuccess: () => invalidarCascadaAvance(queryClient, acuerdoId),
   });
 }
 
-export function useSubirEvidenciaLinkAcuerdo(acuerdoId: string) {
+export function useActualizarCompletadaAccion(acuerdoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (url: string) => acuerdosApi.subirEvidenciaLink(acuerdoId, url),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias', acuerdoId] }),
+    mutationFn: ({ id, completada }: { id: string; completada: boolean }) =>
+      acuerdosApi.actualizarCompletadaAccion(id, completada),
+    onSuccess: () => invalidarCascadaAvance(queryClient, acuerdoId),
+  });
+}
+
+export function useEvidenciasAccion(accionId: string) {
+  return useQuery({
+    queryKey: ['evidencias-accion', accionId],
+    queryFn: () => acuerdosApi.listarEvidenciasAccion(accionId),
+    enabled: Boolean(accionId),
+  });
+}
+
+export function useSubirEvidenciaAccion(accionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (archivo: File) => acuerdosApi.subirEvidenciaAccion(accionId, archivo),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias-accion', accionId] }),
+  });
+}
+
+export function useSubirEvidenciaAccionLink(accionId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string) => acuerdosApi.subirEvidenciaAccionLink(accionId, url),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias-accion', accionId] }),
   });
 }

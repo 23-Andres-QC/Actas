@@ -1,16 +1,15 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Circle, Clock3, Eye, FileCheck2, FileSearch, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronRight, Eye, FileCheck2, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
-import { Button } from '../../../components/ui/button';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
 import { QrActaModal } from './qr-acta-modal';
-import { useAcuerdosPorActa, useActualizarAvanceAcuerdo } from '../../acuerdos/hooks/use-acuerdos';
+import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
-import { EvidenciasModal } from '../../acuerdos/components/evidencias-modal';
+import { AcuerdoRow } from '../../acuerdos/components/acuerdo-row';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
   estrategico: 'Estratégico',
@@ -26,14 +25,8 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const subirActaFisica = useSubirActaFisica();
   const [mostrarQr, setMostrarQr] = useState(false);
   const [mostrarCrearAcuerdo, setMostrarCrearAcuerdo] = useState(false);
-  const [acuerdoEvidencias, setAcuerdoEvidencias] = useState<string | null>(null);
   const [expandida, setExpandida] = useState(false);
   const { data: acuerdos, isLoading: cargandoAcuerdos, isError: errorAcuerdos } = useAcuerdosPorActa(expandida ? acta.id : '');
-  const actualizarAvance = useActualizarAvanceAcuerdo(acta.id);
-
-  const toggleCumplido = (id: string, cumplido: boolean) => {
-    actualizarAvance.mutate({ id, porcentajeAvance: cumplido ? 100 : 0 });
-  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
@@ -194,59 +187,13 @@ export function ActaCard({ acta }: { acta: Acta }) {
           )}
           {!!acuerdos?.length && (
             <div className="space-y-2">
-              {acuerdos.map((acuerdo) => {
-                const cumplido = acuerdo.porcentajeAvance >= 100;
-                return (
-                  <div key={acuerdo.id} className="flex flex-col gap-2 rounded-lg border bg-card px-4 py-3 sm:flex-row sm:items-center">
-                    <span className={`grid size-8 shrink-0 place-items-center rounded-full ${cumplido ? 'bg-success/10 text-success' : 'bg-secondary text-muted-foreground'}`}>
-                      {cumplido ? <CheckCircle2 className="size-4" /> : <Clock3 className="size-4" />}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground">{acuerdo.descripcion}</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {acuerdo.responsableNombre ?? 'Sin responsable'} · vence {new Date(acuerdo.fechaFin).toLocaleDateString('es-PE')}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          toggleCumplido(acuerdo.id, !cumplido);
-                        }}
-                        disabled={actualizarAvance.isPending}
-                        title={cumplido ? 'Marcar como no cumplido' : 'Marcar como cumplido'}
-                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-muted disabled:opacity-50"
-                      >
-                        {cumplido ? (
-                          <><CheckCircle2 className="size-4 text-success" /><Badge variant="success">Sí</Badge></>
-                        ) : (
-                          <><Circle className="size-4 text-muted-foreground" /><Badge variant="secondary">No</Badge></>
-                        )}
-                      </button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setAcuerdoEvidencias(acuerdo.id);
-                        }}
-                      >
-                        <FileSearch className="size-3.5" /> Ver
-                      </Button>
-                      <Badge variant={cumplido ? 'success' : 'secondary'}>{acuerdo.porcentajeAvance}%</Badge>
-                    </div>
-                  </div>
-                );
-              })}
+              {acuerdos.map((acuerdo) => <AcuerdoRow key={acuerdo.id} acuerdo={acuerdo} />)}
             </div>
           )}
         </div>
       )}
       {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
       {mostrarCrearAcuerdo && <CrearAcuerdoModal actaId={acta.id} onClose={() => setMostrarCrearAcuerdo(false)} />}
-      {acuerdoEvidencias && <EvidenciasModal acuerdoId={acuerdoEvidencias} onClose={() => setAcuerdoEvidencias(null)} />}
     </div>
   );
 }
