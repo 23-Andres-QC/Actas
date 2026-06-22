@@ -103,6 +103,13 @@ fun QRScannerScreen(
                             val partes = valor?.split(":", limit = 2)
                             if (partes != null && partes.size == 2 && partes[0].isNotBlank() && partes[1].isNotBlank()) {
                                 yaEscaneado = true
+                                // Libera la cámara trasera YA, no cuando Compose destruya este
+                                // composable: si se espera al onDispose, la navegación a la
+                                // siguiente pantalla puede empezar a abrir la cámara frontal
+                                // antes de que el hardware termine de soltar la trasera, lo que
+                                // se siente como un cuelgue ("como si tomara una foto") al entrar
+                                // a la verificación facial.
+                                cameraController.unbind()
                                 onQRScanned(partes[0], partes[1])
                             }
                         },
