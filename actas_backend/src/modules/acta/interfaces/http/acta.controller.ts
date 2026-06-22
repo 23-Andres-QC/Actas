@@ -8,10 +8,11 @@ import { SubirActaFisicaUseCase } from '../../application/use-cases/subir-acta-f
 import { ListarAsistentesFirmadosUseCase } from '../../../asistencia/application/use-cases/listar-asistentes-firmados.use-case';
 import { ObtenerDocumentoEditableUseCase } from '../../application/use-cases/obtener-documento-editable.use-case';
 import { GuardarDocumentoEditableUseCase } from '../../application/use-cases/guardar-documento-editable.use-case';
+import { RegenerarDocumentoEditableUseCase } from '../../application/use-cases/regenerar-documento-editable.use-case';
 import { crearActaSchema, listarActasQuerySchema } from './acta.validators';
 import { UnauthorizedError, ValidationError } from '../../../../shared/errors/domain-error';
 import { buildActaWordBuffer } from '../../infrastructure/acta-word.builder';
-import { construirConfigDocumentoEditable, verificarTokenCallback } from '../../../../infrastructure/onlyoffice/onlyoffice-config';
+import { construirConfigDocumentoEditable, verificarTokenCallback, forzarGuardado } from '../../../../infrastructure/onlyoffice/onlyoffice-config';
 
 export class ActaController {
   constructor(
@@ -24,6 +25,7 @@ export class ActaController {
     private readonly listarAsistentesFirmados: ListarAsistentesFirmadosUseCase,
     private readonly obtenerDocumentoEditable: ObtenerDocumentoEditableUseCase,
     private readonly guardarDocumentoEditable: GuardarDocumentoEditableUseCase,
+    private readonly regenerarDocumentoEditable: RegenerarDocumentoEditableUseCase,
   ) {}
 
   public crear = async (req: Request, res: Response): Promise<void> => {
@@ -86,16 +88,42 @@ export class ActaController {
     if (!req.user) throw new UnauthorizedError();
     const actaId = req.params.id as string;
     const info = await this.obtenerDocumentoEditable.execute(actaId, req.user.id, req.user.rol);
+    res.json(this.armarRespuestaDocumento(actaId, info, req.user));
+  };
+
+  /** Fuerza la reconstrucción del .docx con los datos actuales (acuerdos, asistentes), pisando ediciones manuales previas. */
+  public regenerarDocumentoEditableHandler = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
+    const actaId = req.params.id as string;
+    await this.regenerarDocumentoEditable.execute(actaId, req.user.id, req.user.rol);
+    const info = await this.obtenerDocumentoEditable.execute(actaId, req.user.id, req.user.rol);
+    res.json(this.armarRespuestaDocumento(actaId, info, req.user));
+  };
+
+  /** Botón "Guardar" del editor: fuerza que OnlyOffice guarde ya lo que el usuario escribió a mano, sin esperar al autosave. */
+  public guardarDocumentoEditableHandler = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
+    const actaId = req.params.id as string;
+    const info = await this.obtenerDocumentoEditable.execute(actaId, req.user.id, req.user.rol);
+    await forzarGuardado(info.key);
+    res.json({ ok: true });
+  };
+
+  private armarRespuestaDocumento(
+    actaId: string,
+    info: { url: string; key: string; titulo: string },
+    usuario: { id: string; email: string },
+  ) {
     const config = construirConfigDocumentoEditable({
       actaId,
       documentUrl: info.url,
       key: info.key,
       titulo: info.titulo,
-      usuarioId: req.user.id,
-      usuarioEmail: req.user.email,
+      usuarioId: usuario.id,
+      usuarioEmail: usuario.email,
     });
-    res.json({ documentServerUrl: process.env.ONLYOFFICE_PUBLIC_URL ?? '', config });
-  };
+    return { documentServerUrl: process.env.ONLYOFFICE_PUBLIC_URL ?? '', config };
+  }
 
   /** Llamado por OnlyOffice Document Server, no por el frontend: no lleva nuestro authMiddleware. */
   public guardarDocumentoEditableCallbackHandler = async (req: Request, res: Response): Promise<void> => {

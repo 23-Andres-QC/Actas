@@ -18,6 +18,8 @@ export function actaRoutes(controller: ActaController): Router {
   router.get('/:id/avance', asyncHandler(controller.avance));
   router.get('/:id/word', asyncHandler(controller.exportarWord));
   router.get('/:id/documento-editable', asyncHandler(controller.obtenerDocumentoEditableHandler));
+  router.post('/:id/documento-editable/regenerar', asyncHandler(controller.regenerarDocumentoEditableHandler));
+  router.post('/:id/documento-editable/guardar', asyncHandler(controller.guardarDocumentoEditableHandler));
   router.post(
     '/:id/acta-fisica',
     requireRole('superadmin', 'admin', 'convocador'),

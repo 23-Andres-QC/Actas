@@ -27,6 +27,7 @@ services:
       ONLYOFFICE_JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:-}
       ONLYOFFICE_PUBLIC_URL: ${ONLYOFFICE_PUBLIC_URL:-http://157.137.189.178:8082}
       ONLYOFFICE_CALLBACK_BASE_URL: http://backend:4000
+      ONLYOFFICE_INTERNAL_URL: ${ONLYOFFICE_INTERNAL_URL:-http://onlyoffice}
     depends_on:
       db:
         condition: service_healthy

@@ -7,6 +7,29 @@ function firmarConfig<T extends object>(config: T): string {
   return jwt.sign(config, SECRET);
 }
 
+const INTERNAL_URL = process.env.ONLYOFFICE_INTERNAL_URL ?? 'http://onlyoffice';
+
+/** El Document Server no tenía cambios pendientes que guardar (nadie editó desde el último guardado): no es un error real. */
+const ERROR_SIN_CAMBIOS = 4;
+
+/**
+ * Le pide al Document Server que guarde ya (botón "Guardar" manual): llama a su
+ * CommandService server-a-server, lo que dispara el mismo callback de guardado
+ * (status 6) que normalmente solo ocurre por autosave/forcesave del editor.
+ */
+export async function forzarGuardado(key: string): Promise<void> {
+  const payload = { c: 'forcesave', key };
+  const respuesta = await fetch(`${INTERNAL_URL}/coauthoring/CommandService.ashx`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...payload, token: firmarConfig(payload) }),
+  });
+  const data = (await respuesta.json()) as { error: number };
+  if (data.error !== 0 && data.error !== ERROR_SIN_CAMBIOS) {
+    throw new Error(`OnlyOffice CommandService devolvió error ${data.error}`);
+  }
+}
+
 /**
  * Verifica el JWT que OnlyOffice envía en el callback de guardado.
  * Por defecto va en el header Authorization: Bearer <token> (configurable como JWT_HEADER en el contenedor).

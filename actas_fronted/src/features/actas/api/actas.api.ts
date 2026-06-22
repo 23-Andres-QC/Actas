@@ -9,6 +9,9 @@ export const actasApi = {
   descargarWord: (id: string) => httpClient.getBlob(`/actas/${id}/word`),
   obtenerDocumentoEditable: (id: string) =>
     httpClient.get<{ documentServerUrl: string; config: Record<string, unknown> }>(`/actas/${id}/documento-editable`),
+  regenerarDocumentoEditable: (id: string) =>
+    httpClient.post<{ documentServerUrl: string; config: Record<string, unknown> }>(`/actas/${id}/documento-editable/regenerar`, {}),
+  guardarDocumentoEditable: (id: string) => httpClient.post<{ ok: true }>(`/actas/${id}/documento-editable/guardar`, {}),
   subirActaFisica: (id: string, archivo: File) => {
     const formData = new FormData();
     formData.append('archivo', archivo);

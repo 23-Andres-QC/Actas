@@ -1,6 +1,7 @@
 import { AccionRepository } from '../../domain/accion.repository';
 import { AcuerdoRepository } from '../../../acuerdo/domain/acuerdo.repository';
 import { RecalcularAvanceActaService } from '../../../acuerdo/application/services/recalcular-avance-acta.service';
+import { RegenerarDocumentoEditableUseCase } from '../../../acta/application/use-cases/regenerar-documento-editable.use-case';
 import { NotFoundError, ForbiddenError } from '../../../../shared/errors/domain-error';
 import { Rol } from '../../../../infrastructure/http/middlewares/auth.middleware';
 import { AccionResponseDTO, toAccionResponseDTO } from '../dto/accion.dto';
@@ -12,6 +13,7 @@ export class ActualizarCompletadaAccionUseCase {
     private readonly accionRepository: AccionRepository,
     private readonly acuerdoRepository: AcuerdoRepository,
     private readonly recalcularAvanceActaService: RecalcularAvanceActaService,
+    private readonly regenerarDocumentoEditable?: RegenerarDocumentoEditableUseCase,
   ) {}
 
   public async execute(
@@ -40,6 +42,12 @@ export class ActualizarCompletadaAccionUseCase {
     acuerdo.actualizarAvance(total === 0 ? 0 : (completadas / total) * 100);
     await this.acuerdoRepository.save(acuerdo);
     await this.recalcularAvanceActaService.ejecutar(acuerdo.actaId);
+
+    try {
+      await this.regenerarDocumentoEditable?.execute(acuerdo.actaId, ejecutadoPorId, ejecutadoPorRol);
+    } catch (error) {
+      console.error('No se pudo regenerar el documento editable tras actualizar la acción:', error);
+    }
 
     return toAccionResponseDTO(accion);
   }
