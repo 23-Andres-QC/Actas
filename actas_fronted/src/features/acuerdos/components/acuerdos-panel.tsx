@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { CheckCircle2, Circle, FileSearch, Loader2, PlusCircle } from 'lucide-react';
+import { CheckCircle2, Circle, FileSearch, Loader2 } from 'lucide-react';
 import { useCrearAcuerdo, useAcuerdosPorActa, useActualizarAvanceAcuerdo } from '../hooks/use-acuerdos';
 import { useUsuarios } from '../../usuarios/hooks/use-usuarios';
 import { Card } from '../../../components/ui/card';
@@ -15,15 +15,16 @@ const selectClass =
 
 interface Props {
   actaId: string;
+  abierto: boolean;
+  onAbiertoChange: (abierto: boolean) => void;
 }
 
-export function AcuerdosPanel({ actaId }: Props) {
+export function AcuerdosPanel({ actaId, abierto, onAbiertoChange }: Props) {
   const { data: acuerdos, isLoading } = useAcuerdosPorActa(actaId);
   const { data: usuarios } = useUsuarios();
   const crearAcuerdo = useCrearAcuerdo(actaId);
   const actualizarAvance = useActualizarAvanceAcuerdo(actaId);
 
-  const [abierto, setAbierto] = useState(false);
   const [descripcion, setDescripcion] = useState('');
   const [responsableId, setResponsableId] = useState('');
   const [fechaFin, setFechaFin] = useState('');
@@ -40,7 +41,7 @@ export function AcuerdosPanel({ actaId }: Props) {
     setDescripcion('');
     setResponsableId('');
     setFechaFin('');
-    setAbierto(false);
+    onAbiertoChange(false);
   };
 
   const toggleCumplido = (id: string, cumplido: boolean) => {
@@ -49,15 +50,9 @@ export function AcuerdosPanel({ actaId }: Props) {
 
   return (
     <div className="mt-8">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <h2 className="font-display text-lg font-semibold text-foreground">Acuerdos y compromisos</h2>
-          <p className="text-sm text-muted-foreground">{acuerdos?.length ?? 0} acuerdo{acuerdos?.length === 1 ? '' : 's'} registrado{acuerdos?.length === 1 ? '' : 's'}</p>
-        </div>
-        <Button variant="outline" onClick={() => setAbierto((v) => !v)} className="gap-2">
-          <PlusCircle className="size-4" />
-          Agregar acuerdo
-        </Button>
+      <div className="mb-4">
+        <h2 className="font-display text-lg font-semibold text-foreground">Acuerdos y compromisos</h2>
+        <p className="text-sm text-muted-foreground">{acuerdos?.length ?? 0} acuerdo{acuerdos?.length === 1 ? '' : 's'} registrado{acuerdos?.length === 1 ? '' : 's'}</p>
       </div>
 
       {/* Formulario */}
@@ -107,7 +102,7 @@ export function AcuerdosPanel({ actaId }: Props) {
               <p className="text-sm font-medium text-destructive">No se pudo crear el acuerdo. Intenta de nuevo.</p>
             )}
             <div className="flex justify-end gap-3 border-t pt-4">
-              <Button type="button" variant="ghost" onClick={() => setAbierto(false)}>Cancelar</Button>
+              <Button type="button" variant="ghost" onClick={() => onAbiertoChange(false)}>Cancelar</Button>
               <Button type="submit" variant="hero" disabled={crearAcuerdo.isPending}>
                 {crearAcuerdo.isPending && <Loader2 className="size-4 animate-spin" />}
                 {crearAcuerdo.isPending ? 'Guardando...' : 'Guardar acuerdo'}

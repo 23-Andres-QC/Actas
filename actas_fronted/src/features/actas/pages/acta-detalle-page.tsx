@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, QrCode, Signature, Upload, UserX } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
@@ -25,6 +25,7 @@ export function ActaDetallePage() {
   const puedeVerInasistentes = esSuperAdmin || esAdmin || esConvocador;
   const [descargando, setDescargando] = useState(false);
   const [mostrarQr, setMostrarQr] = useState(false);
+  const [mostrarFormAcuerdo, setMostrarFormAcuerdo] = useState(false);
 
   if (isLoading) return <div className="h-[70vh] animate-pulse rounded-2xl border bg-card" />;
   if (isError || !acta) return <Card className="p-8 text-center text-sm font-medium text-destructive">No se pudo cargar el acta.</Card>;
@@ -79,6 +80,9 @@ export function ActaDetallePage() {
           </div>
           <Button variant="outline" size="lg" onClick={() => setMostrarQr(true)} title="Ver QR de asistencia">
             <QrCode />
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => setMostrarFormAcuerdo(true)} className="gap-2">
+            <PlusCircle /> Agregar acuerdo
           </Button>
         </div>
       </div>
@@ -135,7 +139,7 @@ export function ActaDetallePage() {
         </article>
       </div>
 
-      <AcuerdosPanel actaId={acta.id} />
+      <AcuerdosPanel actaId={acta.id} abierto={mostrarFormAcuerdo} onAbiertoChange={setMostrarFormAcuerdo} />
 
       {puedeVerInasistentes && <div className="mt-8"><InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} /></div>}
     </section>
