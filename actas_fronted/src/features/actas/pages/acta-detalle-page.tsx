@@ -1,10 +1,11 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
-import { useActa } from '../hooks/use-actas';
+import { ArrowLeft, BrainCircuit, CalendarDays, CheckSquare, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
+import { useActa, useConsejos } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
 import { actasApi } from '../api/actas.api';
+import { ConsejoAcuerdo } from '../types';
 import { useAsistentesFirmados, useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { Card } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
@@ -25,6 +26,8 @@ export function ActaDetallePage() {
   const puedeVerInasistentes = esSuperAdmin || esAdmin || esConvocador;
   const [descargando, setDescargando] = useState(false);
   const [mostrarQr, setMostrarQr] = useState(false);
+  const [consejos, setConsejos] = useState<ConsejoAcuerdo[]>([]);
+  const obtenerConsejos = useConsejos();
   const [mostrarFormAcuerdo, setMostrarFormAcuerdo] = useState(false);
 
   if (isLoading) return <div className="h-[70vh] animate-pulse rounded-2xl border bg-card" />;
@@ -119,17 +122,71 @@ export function ActaDetallePage() {
           {acta.agenda && <DocumentSection title="Agenda de la reunión" content={acta.agenda} />}
 
           <section className="mt-8">
-            <h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">Acuerdos y compromisos</h3>
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <h3 className="font-display text-lg font-bold text-blue-950">Acuerdos y compromisos</h3>
+              {!!acuerdos?.length && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    obtenerConsejos.mutate(
+                      { acta, acuerdos: acuerdos ?? [] },
+                      { onSuccess: (data) => setConsejos(data.consejos) },
+                    )
+                  }
+                  disabled={obtenerConsejos.isPending}
+                  className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800 transition-colors hover:bg-blue-100 disabled:opacity-60"
+                >
+                  {obtenerConsejos.isPending ? (
+                    <><Loader2 className="size-3.5 animate-spin" /> Analizando con IA...</>
+                  ) : (
+                    <><BrainCircuit className="size-3.5" /> Analizar con IA</>
+                  )}
+                </button>
+              )}
+            </div>
             {!acuerdos?.length ? (
               <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center text-sm text-slate-500">Sin acuerdos registrados.</p>
             ) : (
               <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-                {acuerdos.map((acuerdo, index) => (
-                  <div key={acuerdo.id} className="grid gap-3 border-b border-slate-200 p-4 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center">
-                    <div><p className="text-xs font-semibold text-slate-400">Compromiso {index + 1}</p><p className="mt-1 text-sm font-medium">{acuerdo.descripcion}</p><p className="mt-1 text-xs text-slate-500">Fecha límite: {new Date(acuerdo.fechaFin).toLocaleDateString('es-CO')}</p></div>
-                    <div className="flex items-center gap-3"><SemaforoBadge estado={acuerdo.estadoSemaforo} /><span className="text-sm font-bold text-blue-900">{acuerdo.porcentajeAvance}%</span></div>
-                  </div>
-                ))}
+                {acuerdos.map((acuerdo, index) => {
+                  const consejo = consejos.find((c) => c.acuerdoId === acuerdo.id);
+                  return (
+                    <div key={acuerdo.id} className="border-b border-slate-200 p-4 last:border-0">
+                      <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-400">Compromiso {index + 1}</p>
+                          <p className="mt-1 text-sm font-medium">{acuerdo.descripcion}</p>
+                          <p className="mt-1 text-xs text-slate-500">Fecha límite: {new Date(acuerdo.fechaFin).toLocaleDateString('es-CO')}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <SemaforoBadge estado={acuerdo.estadoSemaforo} />
+                          <span className="text-sm font-bold text-blue-900">{acuerdo.porcentajeAvance}%</span>
+                        </div>
+                      </div>
+                      {consejo && (
+                        <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/60 p-3">
+                          <div className="flex items-start gap-2">
+                            <BrainCircuit className="mt-0.5 size-4 shrink-0 text-blue-700" />
+                            <div>
+                              <p className="text-xs font-semibold text-blue-800">Consejo IA</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{consejo.consejo}</p>
+                              {consejo.acciones.length > 0 && (
+                                <ul className="mt-2 space-y-1">
+                                  {consejo.acciones.map((accion: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
+                                      <CheckSquare className="mt-0.5 size-3 shrink-0 text-blue-500" />
+                                      {accion}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
