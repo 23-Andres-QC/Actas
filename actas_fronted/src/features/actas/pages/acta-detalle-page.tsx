@@ -1,17 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, QrCode, Upload, UserX } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, QrCode, Signature, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
 import { actasApi } from '../api/actas.api';
-import { useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
+import { useAsistentesFirmados, useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { Card } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { SemaforoBadge, ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
-import { Inasistente } from '../../asistencia/types';
+import { AsistenteFirmado, Inasistente } from '../../asistencia/types';
 import { QrActaModal } from '../components/qr-acta-modal';
 
 const TIPO_REUNION_LABEL: Record<string, string> = { interna: 'Interna', externa: 'Externa' };
@@ -129,6 +129,8 @@ export function ActaDetallePage() {
             )}
           </section>
 
+          <FirmasSection actaId={acta.id} />
+
           <footer className="mt-12 border-t border-slate-200 pt-4 text-center text-[10px] uppercase tracking-wider text-slate-400">Documento generado por Actas Institucionales</footer>
         </article>
       </div>
@@ -146,6 +148,35 @@ function DocumentField({ icon: Icon, label, value }: { icon: typeof CalendarDays
 
 function DocumentSection({ title, content }: { title: string; content: string }) {
   return <section className="mt-8"><h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">{title}</h3><p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">{content}</p></section>;
+}
+
+function FirmasSection({ actaId }: { actaId: string }) {
+  const { data: asistentes, isLoading } = useAsistentesFirmados(actaId);
+  if (isLoading || !asistentes?.length) return null;
+  return (
+    <section className="mt-8">
+      <h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">Firmas de asistencia</h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {asistentes.map((asistente) => <FirmaCard key={asistente.usuarioId} asistente={asistente} />)}
+      </div>
+    </section>
+  );
+}
+
+function FirmaCard({ asistente }: { asistente: AsistenteFirmado }) {
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-slate-200 p-3 text-center">
+      <div className="grid h-20 w-full place-items-center overflow-hidden rounded-lg bg-slate-50">
+        {asistente.firmaUrl ? (
+          <img src={asistente.firmaUrl} alt={`Firma de ${asistente.nombre}`} className="h-full w-full object-contain" />
+        ) : (
+          <Signature className="size-6 text-slate-300" />
+        )}
+      </div>
+      <p className="mt-2 border-t border-slate-300 pt-1 text-sm font-medium">{asistente.nombre}</p>
+      {asistente.cargo && <p className="text-xs text-slate-500">{asistente.cargo}</p>}
+    </div>
+  );
 }
 
 function InasistentesSection({ actaId, puedeSubirEvidencia }: { actaId: string; puedeSubirEvidencia: boolean }) {

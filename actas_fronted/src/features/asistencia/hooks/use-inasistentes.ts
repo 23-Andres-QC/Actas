@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { asistenciaApi } from '../api/asistencia.api';
 
+export function useAsistentesFirmados(actaId: string) {
+  return useQuery({
+    queryKey: ['asistentes-firmados', actaId],
+    queryFn: () => asistenciaApi.listarAsistentesFirmados(actaId),
+    enabled: Boolean(actaId),
+  });
+}
+
 export function useInasistentes(actaId: string) {
   return useQuery({
     queryKey: ['inasistentes', actaId],
