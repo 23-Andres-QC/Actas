@@ -23,4 +23,11 @@ export class SupabaseStorageAdapter implements StoragePort {
 
     return data.signedUrl;
   }
+
+  public async eliminarArchivo(bucket: string, path: string): Promise<void> {
+    const { error } = await supabaseAdmin.storage.from(bucket).remove([path]);
+    if (error) {
+      throw new Error(`Error eliminando archivo de Supabase Storage: ${error.message}`);
+    }
+  }
 }

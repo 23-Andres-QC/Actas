@@ -26,3 +26,13 @@ export function useCrearActa() {
     },
   });
 }
+
+export function useSubirActaFisica() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, archivo }: { id: string; archivo: File }) => actasApi.subirActaFisica(id, archivo),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['actas'] });
+    },
+  });
+}

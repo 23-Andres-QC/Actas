@@ -1,7 +1,10 @@
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, MapPin, Eye, ChevronRight } from 'lucide-react';
+import { CalendarDays, ChevronRight, Eye, FileCheck2, MapPin, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { ProgressBar } from '../../../components/status';
+import { useRol } from '../../../shared/auth/auth-context';
+import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
@@ -12,6 +15,10 @@ const PROCESO_LABEL: Record<Acta['proceso'], string> = {
 
 export function ActaCard({ acta }: { acta: Acta }) {
   const completed = acta.porcentajeAvance >= 100;
+  const { esSuperAdmin, esAdmin, esConvocador } = useRol();
+  const puedeSubirActaFisica = esSuperAdmin || esAdmin || esConvocador;
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const subirActaFisica = useSubirActaFisica();
 
   return (
     <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-card px-5 py-4 shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
@@ -58,6 +65,47 @@ export function ActaCard({ acta }: { acta: Acta }) {
         <span className="hidden sm:inline">Ver acta</span>
         <ChevronRight className="size-3.5 sm:hidden" />
       </Link>
+
+      {/* Acta física */}
+      {(acta.urlActaFisica || puedeSubirActaFisica) && (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {acta.urlActaFisica && (
+            <a
+              href={acta.urlActaFisica}
+              target="_blank"
+              rel="noreferrer"
+              title="Ver acta física"
+              className="flex items-center justify-center rounded-lg border border-success/30 bg-success/5 p-2 text-success transition-colors hover:bg-success/10"
+            >
+              <FileCheck2 className="size-3.5" />
+            </a>
+          )}
+          {puedeSubirActaFisica && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf,image/png,image/jpeg"
+                className="hidden"
+                onChange={(event) => {
+                  const archivo = event.target.files?.[0];
+                  if (archivo) subirActaFisica.mutate({ id: acta.id, archivo });
+                  event.target.value = '';
+                }}
+              />
+              <button
+                type="button"
+                title={acta.urlActaFisica ? 'Actualizar acta física' : 'Subir acta física'}
+                disabled={subirActaFisica.isPending}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary disabled:pointer-events-none disabled:opacity-50"
+              >
+                <Upload className="size-3.5" />
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
