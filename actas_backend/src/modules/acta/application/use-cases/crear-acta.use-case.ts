@@ -22,7 +22,6 @@ export class CrearActaUseCase {
         horaFin: input.horaFin,
         objetivo: input.objetivo,
         agenda: input.agenda,
-        desarrollo: input.desarrollo,
       },
       randomUUID(),
     );

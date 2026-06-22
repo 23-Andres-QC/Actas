@@ -1,4 +1,4 @@
-import { supabase } from '../auth/supabase-client';
+import { clearSession, getToken } from '../auth/auth-storage';
 
 export class ApiError extends Error {
   constructor(public readonly status: number, public readonly code: string, message: string) {
@@ -9,8 +9,7 @@ export class ApiError extends Error {
 const API_URL = import.meta.env.VITE_API_URL;
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const token = getToken();
 
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
@@ -23,6 +22,10 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+      clearSession();
+      window.location.assign('/');
+    }
     throw new ApiError(response.status, body?.error?.code ?? 'UNKNOWN', body?.error?.message ?? response.statusText);
   }
 
@@ -31,8 +34,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 async function requestBlob(path: string): Promise<Blob> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+  const token = getToken();
 
   const response = await fetch(`${API_URL}${path}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},

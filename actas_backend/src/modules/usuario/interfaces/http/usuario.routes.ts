@@ -9,7 +9,8 @@ export function usuarioRoutes(controller: UsuarioController): Router {
 
   router.use(asyncHandler(authMiddleware));
 
-  router.get('/', requireRole('superadmin', 'admin'), asyncHandler(controller.listar));
+  router.get('/', requireRole('superadmin', 'admin', 'convocador'), asyncHandler(controller.listar));
+  router.post('/', requireRole('superadmin'), asyncHandler(controller.crear));
   router.patch('/:id/rol', requireRole('superadmin', 'admin'), asyncHandler(controller.asignarRolHandler));
 
   return router;

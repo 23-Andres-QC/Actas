@@ -10,10 +10,12 @@
     "lint": "eslint . --ext .ts",
     "test": "vitest run",
     "migrate": "node dist/infrastructure/db/migrate.js",
-    "migrate:dev": "tsx src/infrastructure/db/migrate.ts"
+    "migrate:dev": "tsx src/infrastructure/db/migrate.ts",
+    "seed-users": "node dist/infrastructure/db/seed-users.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",
+    "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "docx": "^9.7.1",
     "dotenv": "^16.4.5",

@@ -4,6 +4,7 @@ import { Rol } from './value-objects/rol.vo';
 interface UsuarioProps {
   nombre: string;
   email: string;
+  passwordHash: string;
   rol: Rol;
   areaId: string | null;
   cargo: string | null;
@@ -24,6 +25,10 @@ export class Usuario extends Entity<UsuarioProps> {
 
   public get email(): string {
     return this.props.email;
+  }
+
+  public get passwordHash(): string {
+    return this.props.passwordHash;
   }
 
   public get rol(): Rol {

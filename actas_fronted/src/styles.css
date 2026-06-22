@@ -166,8 +166,21 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
+    min-width: 320px;
+    min-height: 100vh;
+    background-image: linear-gradient(to bottom, oklch(1 0 0 / 0.35), transparent 28rem);
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-display);
   }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: oklch(0.74 0.13 232 / 0.28);
+  color: var(--color-primary);
 }

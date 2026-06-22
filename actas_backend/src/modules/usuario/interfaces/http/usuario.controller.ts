@@ -1,13 +1,15 @@
 import { Request, Response } from 'express';
 import { ListarUsuariosUseCase } from '../../application/use-cases/listar-usuarios.use-case';
 import { AsignarRolUseCase } from '../../application/use-cases/asignar-rol.use-case';
-import { asignarRolSchema, listarUsuariosQuerySchema } from './usuario.validators';
+import { CrearUsuarioUseCase } from '../../application/use-cases/crear-usuario.use-case';
+import { asignarRolSchema, crearUsuarioSchema, listarUsuariosQuerySchema } from './usuario.validators';
 import { UnauthorizedError } from '../../../../shared/errors/domain-error';
 
 export class UsuarioController {
   constructor(
     private readonly listarUsuarios: ListarUsuariosUseCase,
     private readonly asignarRol: AsignarRolUseCase,
+    private readonly crearUsuario: CrearUsuarioUseCase,
   ) {}
 
   public listar = async (req: Request, res: Response): Promise<void> => {
@@ -33,5 +35,17 @@ export class UsuarioController {
     });
 
     res.json(usuario);
+  };
+
+  public crear = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
+    const body = crearUsuarioSchema.parse(req.body);
+    const usuario = await this.crearUsuario.execute({
+      ...body,
+      areaId: body.areaId ?? null,
+      cargo: body.cargo ?? null,
+      ejecutadoPorRol: req.user.rol,
+    });
+    res.status(201).json(usuario);
   };
 }

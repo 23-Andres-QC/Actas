@@ -88,7 +88,7 @@ export function LandingPage() {
               <Link to="/login">Iniciar sesión</Link>
             </Button>
             <Button asChild variant="hero">
-              <Link to="/login">Comenzar demo</Link>
+              <Link to="/login">Ingresar a la plataforma</Link>
             </Button>
           </div>
 
@@ -109,7 +109,7 @@ export function LandingPage() {
                 <Link to="/login">Iniciar sesión</Link>
               </Button>
               <Button asChild variant="hero">
-                <Link to="/login">Comenzar demo</Link>
+                <Link to="/login">Ingresar a la plataforma</Link>
               </Button>
             </nav>
           </div>
@@ -140,7 +140,7 @@ export function LandingPage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="hero" size="lg">
                 <Link to="/login">
-                  Comenzar demo <ArrowRight className="size-4" />
+                  Ingresar a la plataforma <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
@@ -248,7 +248,7 @@ export function LandingPage() {
           <div className="relative mt-12 grid gap-6 md:grid-cols-4">
             <div className="absolute left-0 right-0 top-7 hidden h-0.5 bg-gradient-to-r from-primary/30 via-accent/40 to-primary/30 md:block" />
             {[
-              { n: '1', icon: ClipboardList, title: 'Crear el acta', desc: 'Registra reunión interna o externa, proceso, fecha, unidad orgánica, agenda, desarrollo y anexos.' },
+              { n: '1', icon: ClipboardList, title: 'Crear el acta', desc: 'Registra reunión interna o externa, proceso, fecha, unidad orgánica, agenda y anexos.' },
               { n: '2', icon: Users, title: 'Registrar acuerdos', desc: 'Cada acuerdo incluye responsable, fecha de inicio, fecha máxima, estado y porcentaje de avance.' },
               { n: '3', icon: CloudUpload, title: 'Subir evidencias', desc: 'Adjunta documentos, fotos, videos, grabaciones o actas físicas escaneadas.' },
               { n: '4', icon: Gauge, title: 'Monitorear cumplimiento', desc: 'Visualiza dashboard, semáforos, alertas, inasistencias y cumplimiento por área.' },
@@ -311,7 +311,7 @@ export function LandingPage() {
               </h3>
               <div className="space-y-3">
                 {[
-                  { icon: ClipboardList, title: 'Crear acta', desc: 'Formato estándar y asistencia de IA simulada.' },
+                  { icon: ClipboardList, title: 'Crear acta', desc: 'Formato institucional estructurado y trazable.' },
                   { icon: FileText, title: 'Acta y acuerdos', desc: 'Lista de acuerdos con responsable principal.' },
                   { icon: Gauge, title: 'Seguimiento de acuerdos', desc: 'Fecha inicio/fin, semáforo, porcentaje de avance y evidencias.' },
                   { icon: Video, title: 'Evidencias de reunión', desc: 'URL de grabación, fotos, videos, documentos y acta física.' },
@@ -456,7 +456,7 @@ export function LandingPage() {
                 variant="outline"
                 className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
               >
-                <Link to="/login">Ver demo</Link>
+                <a href="#como-funciona">Conocer el proceso</a>
               </Button>
             </div>
           </div>

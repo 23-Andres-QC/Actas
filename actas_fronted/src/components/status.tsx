@@ -26,8 +26,8 @@ export function SemaforoDot({ semaforo, label }: { semaforo: Semaforo; label?: s
 export function ProgressBar({ value }: { value: number }) {
   const color = value >= 70 ? 'bg-success' : value >= 40 ? 'bg-accent' : 'bg-warning';
   return (
-    <div className="h-2.5 w-full overflow-hidden rounded-full bg-secondary">
-      <div className={cn('h-full rounded-full transition-all', color)} style={{ width: `${value}%` }} />
+    <div className="h-2 w-full overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}>
+      <div className={cn('h-full rounded-full transition-all duration-500', color)} style={{ width: `${Math.min(100, Math.max(0, value))}%` }} />
     </div>
   );
 }

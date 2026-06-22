@@ -15,7 +15,7 @@ export class ListarUsuariosUseCase {
     let areaId = input.areaId;
 
     // Un Admin solo puede ver usuarios de su propia área, sin importar lo que pida por query param.
-    if (input.ejecutadoPorRol === 'admin') {
+    if (input.ejecutadoPorRol === 'admin' || input.ejecutadoPorRol === 'convocador') {
       const ejecutor = await this.usuarioRepository.findById(input.ejecutadoPorId);
       areaId = ejecutor?.areaId ?? undefined;
     }

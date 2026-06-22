@@ -9,13 +9,15 @@ import { Label } from '../../../components/ui/label';
 import { Textarea } from '../../../components/ui/textarea';
 import { Button } from '../../../components/ui/button';
 import { Proceso, TipoReunion } from '../types';
+import { useAreas } from '../../areas/hooks/use-areas';
 
 const selectClass =
-  'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring';
+  'flex h-11 w-full rounded-xl border border-input bg-background px-3.5 py-2 text-sm shadow-sm transition-all hover:border-accent/60 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30';
 
 export function CrearActaPage() {
   const navigate = useNavigate();
   const crearActa = useCrearActa();
+  const { data: areas } = useAreas();
 
   const [titulo, setTitulo] = useState('');
   const [areaId, setAreaId] = useState('');
@@ -27,7 +29,6 @@ export function CrearActaPage() {
   const [horaFin, setHoraFin] = useState('');
   const [objetivo, setObjetivo] = useState('');
   const [agenda, setAgenda] = useState('');
-  const [desarrollo, setDesarrollo] = useState('');
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -43,17 +44,16 @@ export function CrearActaPage() {
       horaFin,
       objetivo,
       agenda,
-      desarrollo,
     });
     navigate(`/app/actas/${acta.id}`);
   };
 
   return (
-    <section className="mx-auto max-w-2xl">
-      <PageHeader title="Crear acta" description="Registra una nueva acta institucional con el formato oficial." />
+    <section className="mx-auto max-w-4xl">
+      <PageHeader eyebrow="Nuevo registro" title="Crear acta" description="Completa la información oficial de la reunión. Después podrás agregar acuerdos, responsables y asistentes." />
 
-      <Card className="p-6">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <Card className="border-border/70 p-5 sm:p-7">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="tipoReunion">Tipo de reunión</Label>
@@ -83,8 +83,11 @@ export function CrearActaPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="areaId">Unidad orgánica (área UUID)</Label>
-            <Input id="areaId" value={areaId} onChange={(e) => setAreaId(e.target.value)} required />
+            <Label htmlFor="areaId">Área responsable</Label>
+            <select id="areaId" className={selectClass} value={areaId} onChange={(e) => setAreaId(e.target.value)} required>
+              <option value="">Selecciona un área</option>
+              {areas?.map((area) => <option key={area.id} value={area.id}>{area.nombre}</option>)}
+            </select>
           </div>
 
           <div className="space-y-1.5">
@@ -128,19 +131,17 @@ export function CrearActaPage() {
             <Textarea id="agenda" value={agenda} onChange={(e) => setAgenda(e.target.value)} />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="desarrollo">Desarrollo de la reunión</Label>
-            <Textarea id="desarrollo" value={desarrollo} onChange={(e) => setDesarrollo(e.target.value)} rows={5} />
-          </div>
-
-          <p className="text-xs text-muted-foreground">
+          <p className="rounded-xl bg-secondary/55 px-4 py-3 text-xs leading-relaxed text-muted-foreground">
             Los acuerdos, responsables y asistentes se agregan desde el detalle del acta una vez creada.
           </p>
 
-          <Button type="submit" variant="hero" className="w-full" disabled={crearActa.isPending}>
-            {crearActa.isPending && <Loader2 className="size-4 animate-spin" />} Crear acta
-          </Button>
-          {crearActa.isError && <p className="text-sm font-medium text-destructive">No se pudo crear el acta</p>}
+          {crearActa.isError && <p role="alert" className="rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">No se pudo crear el acta. Revisa los datos e intenta nuevamente.</p>}
+          <div className="flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={() => navigate('/app')}>Cancelar</Button>
+            <Button type="submit" variant="hero" size="lg" disabled={crearActa.isPending}>
+              {crearActa.isPending && <Loader2 className="size-4 animate-spin" />} {crearActa.isPending ? 'Creando acta...' : 'Crear acta'}
+            </Button>
+          </div>
         </form>
       </Card>
     </section>

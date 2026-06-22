@@ -4,6 +4,7 @@ export interface AcuerdoResponseDTO {
   id: string;
   actaId: string;
   responsableId: string;
+  responsableNombre?: string;
   descripcion: string;
   fechaInicio: string;
   fechaFin: string;
@@ -19,11 +20,12 @@ export interface CrearAcuerdoDTO {
   fechaFin: string;
 }
 
-export function toAcuerdoResponseDTO(acuerdo: Acuerdo): AcuerdoResponseDTO {
+export function toAcuerdoResponseDTO(acuerdo: Acuerdo, responsableNombre?: string): AcuerdoResponseDTO {
   return {
     id: acuerdo.id,
     actaId: acuerdo.actaId,
     responsableId: acuerdo.responsableId,
+    responsableNombre,
     descripcion: acuerdo.descripcion,
     fechaInicio: acuerdo.fechaInicio.toISOString(),
     fechaFin: acuerdo.fechaFin.toISOString(),

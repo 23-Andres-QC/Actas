@@ -15,7 +15,6 @@ export interface Acta {
   horaFin: string;
   objetivo: string;
   agenda: string;
-  desarrollo: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
   porcentajeAvance: number;
@@ -33,5 +32,4 @@ export interface CrearActaInput {
   horaFin: string;
   objetivo: string;
   agenda: string;
-  desarrollo: string;
 }

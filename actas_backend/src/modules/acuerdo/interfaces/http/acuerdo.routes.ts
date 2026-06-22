@@ -8,7 +8,7 @@ import { asyncHandler } from '../../../../infrastructure/http/middlewares/async-
 export function acuerdoNestedRoutes(controller: AcuerdoController): Router {
   const router = Router({ mergeParams: true });
   router.use(asyncHandler(authMiddleware));
-  router.post('/', requireRole('convocador'), asyncHandler(controller.crear));
+  router.post('/', requireRole('superadmin', 'convocador'), asyncHandler(controller.crear));
   router.get('/', asyncHandler(controller.listarPorActaHandler));
   return router;
 }
@@ -18,6 +18,6 @@ export function acuerdoRoutes(controller: AcuerdoController): Router {
   const router = Router();
   router.use(asyncHandler(authMiddleware));
   router.get('/mios', asyncHandler(controller.listarMios));
-  router.patch('/:id/avance', requireRole('convocador', 'admin', 'asistente'), asyncHandler(controller.actualizarAvanceHandler));
+  router.patch('/:id/avance', requireRole('superadmin', 'convocador', 'admin', 'asistente'), asyncHandler(controller.actualizarAvanceHandler));
   return router;
 }

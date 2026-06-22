@@ -14,7 +14,6 @@ export const crearActaSchema = z.object({
   horaFin: horaSchema,
   objetivo: z.string().default(''),
   agenda: z.string().default(''),
-  desarrollo: z.string().default(''),
 });
 
 export const listarActasQuerySchema = z.object({

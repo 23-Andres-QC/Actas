@@ -19,7 +19,6 @@ interface ActaProps {
   horaFin: string;
   objetivo: string;
   agenda: string;
-  desarrollo: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
   porcentajeAvance: PorcentajeAvance;
@@ -92,10 +91,6 @@ export class Acta extends AggregateRoot<ActaProps> {
 
   public get agenda(): string {
     return this.props.agenda;
-  }
-
-  public get desarrollo(): string {
-    return this.props.desarrollo;
   }
 
   public get urlGrabacion(): string | null {

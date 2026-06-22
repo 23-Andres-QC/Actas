@@ -1,48 +1,40 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from './supabase-client';
-
-export type Rol = 'superadmin' | 'admin' | 'convocador' | 'asistente';
+import { createContext, ReactNode, useContext, useState } from 'react';
+import { clearSession, LocalSession, readSession, Rol, saveSession } from './auth-storage';
 
 interface AuthState {
-  session: Session | null;
+  session: LocalSession | null;
   rol: Rol | null;
   loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
+const API_URL = import.meta.env.VITE_API_URL;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<LocalSession | null>(() => readSession());
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
+  const signIn = async (email: string, password: string) => {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
     });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(body?.error?.message ?? 'No fue posible iniciar sesión');
+    const nextSession: LocalSession = { token: body.token, user: body.usuario };
+    saveSession(nextSession);
+    setSession(nextSession);
+  };
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, []);
-
-  const rol = (session?.user.app_metadata?.rol as Rol) ?? null;
+  const signOut = async () => {
+    clearSession();
+    setSession(null);
+  };
 
   return (
-    <AuthContext.Provider
-      value={{
-        session,
-        rol,
-        loading,
-        signOut: async () => {
-          await supabase.auth.signOut();
-        },
-      }}
-    >
+    <AuthContext.Provider value={{ session, rol: session?.user.rol ?? null, loading: false, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -54,11 +46,6 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
-/**
- * Espejo del RBAC del backend: centraliza qué puede ver/hacer el usuario en la UI.
- * Cada `esX` es exclusivo (un usuario tiene un solo rol). Para lógica de "admin o
- * superior" se compone explícitamente, ej. `esAdmin || esSuperAdmin`.
- */
 export function useRol() {
   const { rol } = useAuth();
   return {
@@ -69,3 +56,5 @@ export function useRol() {
     esAsistente: rol === 'asistente',
   };
 }
+
+export type { Rol } from './auth-storage';

@@ -1,25 +1,19 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { CalendarDays, Clock, Download, Loader2, MapPin, Upload, UserX, FileCheck2 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Loader2, MapPin, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { actasApi } from '../api/actas.api';
 import { useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
-import { PageHeader } from '../../../components/page-header';
-import { Card, CardContent } from '../../../components/ui/card';
+import { Card } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../../components/ui/accordion';
 import { SemaforoBadge, ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { Inasistente } from '../../asistencia/types';
 
 const TIPO_REUNION_LABEL: Record<string, string> = { interna: 'Interna', externa: 'Externa' };
-const PROCESO_LABEL: Record<string, string> = {
-  estrategico: 'Estratégico',
-  operativo: 'Operativo',
-  soporte: 'Soporte',
-};
+const PROCESO_LABEL: Record<string, string> = { estrategico: 'Estratégico', operativo: 'Operativo', soporte: 'Soporte' };
 
 export function ActaDetallePage() {
   const { id } = useParams<{ id: string }>();
@@ -29,8 +23,8 @@ export function ActaDetallePage() {
   const puedeVerInasistentes = esSuperAdmin || esAdmin || esConvocador;
   const [descargando, setDescargando] = useState(false);
 
-  if (isLoading) return <p className="text-sm text-muted-foreground">Cargando...</p>;
-  if (isError || !acta) return <p className="text-sm font-medium text-destructive">No se pudo cargar el acta</p>;
+  if (isLoading) return <div className="h-[70vh] animate-pulse rounded-2xl border bg-card" />;
+  if (isError || !acta) return <Card className="p-8 text-center text-sm font-medium text-destructive">No se pudo cargar el acta.</Card>;
 
   const descargarWord = async () => {
     setDescargando(true);
@@ -39,7 +33,7 @@ export function ActaDetallePage() {
       const url = URL.createObjectURL(blob);
       const enlace = document.createElement('a');
       enlace.href = url;
-      enlace.download = `acta-${acta.titulo}.docx`;
+      enlace.download = `acta-${acta.titulo.replace(/[^a-zA-Z0-9-_]+/g, '-').toLowerCase()}.docx`;
       enlace.click();
       URL.revokeObjectURL(url);
     } finally {
@@ -47,179 +41,116 @@ export function ActaDetallePage() {
     }
   };
 
+  const fecha = new Date(acta.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+
   return (
-    <section>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <PageHeader title={acta.titulo} description={`Avance general: ${acta.porcentajeAvance}%`} />
-        <Button variant="outline" size="sm" onClick={descargarWord} disabled={descargando}>
-          {descargando ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} Descargar Word
-        </Button>
+    <section className="mx-auto max-w-6xl">
+      <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <Link to="/app" className="mb-2 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-primary">
+            <ArrowLeft className="size-4" /> Volver a actas
+          </Link>
+          <div className="flex items-center gap-2">
+            <Eye className="size-5 text-primary" />
+            <h1 className="font-display text-2xl font-bold tracking-tight">Acta virtual</h1>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">Vista oficial para consulta y descarga.</p>
+        </div>
+        <div className="rounded-2xl border bg-card p-2 shadow-card">
+          <Button variant="hero" size="lg" onClick={descargarWord} disabled={descargando}>
+            {descargando ? <Loader2 className="animate-spin" /> : <Download />}
+            {descargando ? 'Preparando documento...' : 'Descargar Word'}
+          </Button>
+          <p className="px-2 pt-1.5 text-center text-[10px] text-muted-foreground">Documento editable .docx</p>
+        </div>
       </div>
 
-      <Card className="mb-6 space-y-4 p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge variant="secondary">{TIPO_REUNION_LABEL[acta.tipoReunion]}</Badge>
-          <Badge variant="accent">{PROCESO_LABEL[acta.proceso]}</Badge>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <CalendarDays className="size-3.5" /> {new Date(acta.fecha).toLocaleDateString()}
-          </span>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="size-3.5" /> {acta.horaInicio} - {acta.horaFin}
-          </span>
-          {acta.lugar && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="size-3.5" /> {acta.lugar}
-            </span>
-          )}
-        </div>
+      <div className="rounded-3xl border border-border/70 bg-slate-200/65 p-3 shadow-inner sm:p-6 lg:p-10">
+        <article className="mx-auto min-h-[760px] max-w-4xl bg-white px-5 py-8 text-slate-800 shadow-xl sm:px-10 sm:py-12 lg:px-16">
+          <header className="border-b-2 border-blue-900 pb-6">
+            <div className="flex items-start justify-between gap-5">
+              <div className="flex items-center gap-3">
+                <span className="grid size-12 place-items-center rounded-xl bg-blue-900 text-white"><FileText className="size-6" /></span>
+                <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-900">Actas Institucionales</p><p className="text-xs text-slate-500">Gestión y seguimiento de compromisos</p></div>
+              </div>
+              <Badge variant={acta.porcentajeAvance >= 100 ? 'success' : 'secondary'}>{acta.porcentajeAvance >= 100 ? 'Completada' : 'En seguimiento'}</Badge>
+            </div>
+            <p className="mt-8 text-center text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Acta de reunión</p>
+            <h2 className="mx-auto mt-2 max-w-2xl text-center font-display text-2xl font-bold leading-tight text-blue-950 sm:text-3xl">{acta.titulo}</h2>
+          </header>
 
-        <div className="max-w-sm">
-          <ProgressBar value={acta.porcentajeAvance} />
-        </div>
-
-        {acta.objetivo && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">Objetivo de la reunión</p>
-            <p className="text-sm">{acta.objetivo}</p>
+          <div className="mt-7 grid overflow-hidden rounded-xl border border-slate-200 sm:grid-cols-2">
+            <DocumentField icon={CalendarDays} label="Fecha" value={fecha} />
+            <DocumentField icon={Clock} label="Horario" value={`${acta.horaInicio} – ${acta.horaFin}`} />
+            <DocumentField icon={MapPin} label="Lugar" value={acta.lugar} />
+            <DocumentField icon={FileCheck2} label="Clasificación" value={`${TIPO_REUNION_LABEL[acta.tipoReunion]} · ${PROCESO_LABEL[acta.proceso]}`} />
           </div>
-        )}
-        {acta.agenda && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">Agenda de la reunión</p>
-            <p className="whitespace-pre-line text-sm">{acta.agenda}</p>
-          </div>
-        )}
-        {acta.desarrollo && (
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground">Desarrollo de la reunión</p>
-            <p className="whitespace-pre-line text-sm">{acta.desarrollo}</p>
-          </div>
-        )}
-      </Card>
 
-      <h2 className="mb-3 font-display text-lg font-semibold">Acuerdos y compromisos</h2>
+          <div className="mt-7">
+            <div className="mb-2 flex items-center justify-between text-xs"><span className="font-semibold uppercase tracking-wider text-slate-500">Avance general</span><span className="font-bold text-blue-900">{acta.porcentajeAvance}%</span></div>
+            <ProgressBar value={acta.porcentajeAvance} />
+          </div>
 
-      {!acuerdos?.length ? (
-        <p className="text-sm text-muted-foreground">Sin acuerdos registrados.</p>
-      ) : (
-        <Card className="mb-6">
-          <Accordion type="single" collapsible>
-            {acuerdos.map((acuerdo) => (
-              <AccordionItem key={acuerdo.id} value={acuerdo.id} className="border-b px-5 last:border-0">
-                <AccordionTrigger>
-                  <div className="flex flex-1 flex-wrap items-center gap-4 pr-4">
-                    <span className="min-w-[200px] flex-1 text-left">{acuerdo.descripcion}</span>
-                    <SemaforoBadge estado={acuerdo.estadoSemaforo} />
-                    <span className="text-xs text-muted-foreground">
-                      fecha máxima {new Date(acuerdo.fechaFin).toLocaleDateString()}
-                    </span>
+          {acta.objetivo && <DocumentSection title="Objetivo de la reunión" content={acta.objetivo} />}
+          {acta.agenda && <DocumentSection title="Agenda de la reunión" content={acta.agenda} />}
+
+          <section className="mt-8">
+            <h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">Acuerdos y compromisos</h3>
+            {!acuerdos?.length ? (
+              <p className="mt-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-5 text-center text-sm text-slate-500">Sin acuerdos registrados.</p>
+            ) : (
+              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+                {acuerdos.map((acuerdo, index) => (
+                  <div key={acuerdo.id} className="grid gap-3 border-b border-slate-200 p-4 last:border-0 sm:grid-cols-[1fr_auto] sm:items-center">
+                    <div><p className="text-xs font-semibold text-slate-400">Compromiso {index + 1}</p><p className="mt-1 text-sm font-medium">{acuerdo.descripcion}</p><p className="mt-1 text-xs text-slate-500">Fecha límite: {new Date(acuerdo.fechaFin).toLocaleDateString('es-CO')}</p></div>
+                    <div className="flex items-center gap-3"><SemaforoBadge estado={acuerdo.estadoSemaforo} /><span className="text-sm font-bold text-blue-900">{acuerdo.porcentajeAvance}%</span></div>
                   </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <CardContent className="pt-0">
-                    <div className="mb-1 flex justify-between text-xs">
-                      <span>Avance — Se cumplió: {acuerdo.porcentajeAvance >= 100 ? 'Sí' : 'No'}</span>
-                      <span className="font-semibold">{acuerdo.porcentajeAvance}%</span>
-                    </div>
-                    <ProgressBar value={acuerdo.porcentajeAvance} />
-                  </CardContent>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </Card>
-      )}
+                ))}
+              </div>
+            )}
+          </section>
 
-      {puedeVerInasistentes && <InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} />}
+          <footer className="mt-12 border-t border-slate-200 pt-4 text-center text-[10px] uppercase tracking-wider text-slate-400">Documento generado por Actas Institucionales</footer>
+        </article>
+      </div>
+
+      {puedeVerInasistentes && <div className="mt-8"><InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} /></div>}
     </section>
   );
 }
 
+function DocumentField({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
+  return <div className="flex gap-3 border-b border-slate-200 p-4 last:border-0 sm:border-r sm:[&:nth-child(even)]:border-r-0"><Icon className="mt-0.5 size-4 shrink-0 text-blue-800" /><div><p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">{label}</p><p className="mt-0.5 text-sm font-medium">{value}</p></div></div>;
+}
+
+function DocumentSection({ title, content }: { title: string; content: string }) {
+  return <section className="mt-8"><h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">{title}</h3><p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">{content}</p></section>;
+}
+
 function InasistentesSection({ actaId, puedeSubirEvidencia }: { actaId: string; puedeSubirEvidencia: boolean }) {
   const { data: inasistentes, isLoading, isError } = useInasistentes(actaId);
-
   return (
     <>
-      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold">
-        <UserX className="size-5" /> Inasistentes
-      </h2>
-
+      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold"><UserX className="size-5" /> Gestión de inasistencias</h2>
       {isLoading && <p className="text-sm text-muted-foreground">Cargando...</p>}
-      {isError && <p className="text-sm font-medium text-destructive">No se pudieron cargar los inasistentes</p>}
-      {!isLoading && !isError && !inasistentes?.length && (
-        <p className="text-sm text-muted-foreground">Todos los miembros del área asistieron.</p>
-      )}
-
-      {!!inasistentes?.length && (
-        <Card>
-          <ul className="divide-y">
-            {inasistentes.map((inasistente) => (
-              <InasistenteRow
-                key={inasistente.usuarioId}
-                actaId={actaId}
-                inasistente={inasistente}
-                puedeSubirEvidencia={puedeSubirEvidencia}
-              />
-            ))}
-          </ul>
-        </Card>
-      )}
+      {isError && <p className="text-sm font-medium text-destructive">No se pudieron cargar los inasistentes.</p>}
+      {!isLoading && !isError && !inasistentes?.length && <Card className="p-5 text-sm text-muted-foreground">Todos los miembros del área asistieron.</Card>}
+      {!!inasistentes?.length && <Card><ul className="divide-y">{inasistentes.map((inasistente) => <InasistenteRow key={inasistente.usuarioId} actaId={actaId} inasistente={inasistente} puedeSubirEvidencia={puedeSubirEvidencia} />)}</ul></Card>}
     </>
   );
 }
 
-function InasistenteRow({
-  actaId,
-  inasistente,
-  puedeSubirEvidencia,
-}: {
-  actaId: string;
-  inasistente: Inasistente;
-  puedeSubirEvidencia: boolean;
-}) {
+function InasistenteRow({ actaId, inasistente, puedeSubirEvidencia }: { actaId: string; inasistente: Inasistente; puedeSubirEvidencia: boolean }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subirEvidencia = useSubirEvidenciaInasistencia(actaId);
-
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 p-4">
-      <div>
-        <p className="text-sm font-medium">{inasistente.nombre}</p>
-        <p className="text-xs text-muted-foreground">{inasistente.email}</p>
-      </div>
-
+      <div><p className="text-sm font-medium">{inasistente.nombre}</p><p className="text-xs text-muted-foreground">{inasistente.email}</p></div>
       {inasistente.evidenciaUrl ? (
-        <a
-          href={inasistente.evidenciaUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-1 text-sm font-medium text-success"
-        >
-          <FileCheck2 className="size-4" /> Justificación subida
-        </a>
+        <a href={inasistente.evidenciaUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-sm font-medium text-success"><FileCheck2 className="size-4" /> Justificación subida</a>
       ) : puedeSubirEvidencia ? (
-        <>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/png,image/jpeg,application/pdf"
-            className="hidden"
-            onChange={(e) => {
-              const archivo = e.target.files?.[0];
-              if (archivo) subirEvidencia.mutate({ usuarioId: inasistente.usuarioId, archivo });
-            }}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={subirEvidencia.isPending}
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Upload className="size-4" /> {subirEvidencia.isPending ? 'Subiendo...' : 'Subir justificación'}
-          </Button>
-        </>
-      ) : (
-        <Badge variant="destructive">Sin justificación</Badge>
-      )}
+        <><input ref={fileInputRef} type="file" accept="image/png,image/jpeg,application/pdf" className="hidden" onChange={(event) => { const archivo = event.target.files?.[0]; if (archivo) subirEvidencia.mutate({ usuarioId: inasistente.usuarioId, archivo }); }} /><Button variant="outline" size="sm" disabled={subirEvidencia.isPending} onClick={() => fileInputRef.current?.click()}><Upload /> {subirEvidencia.isPending ? 'Subiendo...' : 'Subir justificación'}</Button></>
+      ) : <Badge variant="destructive">Sin justificación</Badge>}
     </li>
   );
 }

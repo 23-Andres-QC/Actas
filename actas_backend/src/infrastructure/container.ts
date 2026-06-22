@@ -4,7 +4,10 @@ import { Pool } from 'pg';
 import { PostgresUsuarioRepository } from '../modules/usuario/infrastructure/postgres-usuario.repository';
 import { ListarUsuariosUseCase } from '../modules/usuario/application/use-cases/listar-usuarios.use-case';
 import { AsignarRolUseCase } from '../modules/usuario/application/use-cases/asignar-rol.use-case';
+import { CrearUsuarioUseCase } from '../modules/usuario/application/use-cases/crear-usuario.use-case';
+import { AutenticarUsuarioUseCase } from '../modules/usuario/application/use-cases/autenticar-usuario.use-case';
 import { UsuarioController } from '../modules/usuario/interfaces/http/usuario.controller';
+import { AuthController } from '../modules/usuario/interfaces/http/auth.controller';
 
 // Acta
 import { PostgresActaRepository } from '../modules/acta/infrastructure/postgres-acta.repository';
@@ -42,6 +45,11 @@ import { SubirEvidenciaUseCase } from '../modules/evidencia/application/use-case
 import { ListarEvidenciasUseCase } from '../modules/evidencia/application/use-cases/listar-evidencias.use-case';
 import { EvidenciaController } from '../modules/evidencia/interfaces/http/evidencia.controller';
 
+// Área
+import { PostgresAreaRepository } from '../modules/area/infrastructure/postgres-area.repository';
+import { CrearAreaUseCase, ListarAreasUseCase } from '../modules/area/application/area.use-cases';
+import { AreaController } from '../modules/area/interfaces/http/area.controller';
+
 /**
  * Contenedor manual de dependencias: cablea repositorios (adaptadores) con
  * casos de uso y controladores. Sustituye a un framework de DI (tsyringe/
@@ -49,11 +57,15 @@ import { EvidenciaController } from '../modules/evidencia/interfaces/http/eviden
  * nunca instancian directamente sus dependencias de infraestructura.
  */
 export function buildContainer(pool: Pool) {
+  const areaRepository = new PostgresAreaRepository(pool);
+  const areaController = new AreaController(new ListarAreasUseCase(areaRepository), new CrearAreaUseCase(areaRepository));
   const usuarioRepository = new PostgresUsuarioRepository(pool);
   const usuarioController = new UsuarioController(
     new ListarUsuariosUseCase(usuarioRepository),
     new AsignarRolUseCase(usuarioRepository),
+    new CrearUsuarioUseCase(usuarioRepository),
   );
+  const authController = new AuthController(new AutenticarUsuarioUseCase(usuarioRepository));
 
   const actaRepository = new PostgresActaRepository(pool);
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
@@ -64,13 +76,13 @@ export function buildContainer(pool: Pool) {
     new ListarActasUseCase(actaRepository, usuarioRepository),
     new ObtenerActaUseCase(actaRepository),
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
-    new ListarAcuerdosPorActaUseCase(acuerdoRepository),
+    new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository),
     new SubirActaFisicaUseCase(actaRepository, storage),
   );
 
   const acuerdoController = new AcuerdoController(
-    new CrearAcuerdoUseCase(acuerdoRepository),
-    new ListarAcuerdosPorActaUseCase(acuerdoRepository),
+    new CrearAcuerdoUseCase(acuerdoRepository, usuarioRepository),
+    new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository),
     new ActualizarAvanceAcuerdoUseCase(acuerdoRepository, actaRepository, avanceAcuerdosProvider),
     new ListarAcuerdosPorResponsableUseCase(acuerdoRepository, actaRepository),
   );
@@ -94,6 +106,8 @@ export function buildContainer(pool: Pool) {
 
   return {
     usuarioController,
+    authController,
+    areaController,
     actaController,
     acuerdoController,
     asistenciaController,

@@ -6,6 +6,7 @@ import { Usuario } from './usuario.entity';
  */
 export interface UsuarioRepository {
   findById(id: string): Promise<Usuario | null>;
+  findByEmail(email: string): Promise<Usuario | null>;
   findAll(filtro?: { areaId?: string }): Promise<Usuario[]>;
   save(usuario: Usuario): Promise<void>;
 }

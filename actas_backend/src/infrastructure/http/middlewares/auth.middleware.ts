@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../../../shared/errors/domain-error';
-import { supabaseAdmin } from '../../supabase/client';
 
 export type Rol = 'superadmin' | 'admin' | 'convocador' | 'asistente';
 
@@ -16,36 +16,24 @@ declare module 'express-serve-static-core' {
   }
 }
 
-/**
- * Verifica el JWT emitido por Supabase Auth contra la API de Supabase
- * (auth.getUser), en vez de verificarlo localmente con un secreto compartido.
- * Esto funciona sin importar el algoritmo de firma del proyecto (HS256 legacy
- * o JWT Signing Keys asimétricos ECC/RSA) y evita mantener un secreto extra
- * en el backend. El rol nunca se confía desde el cliente: viene de
- * `app_metadata`, que solo se puede modificar con la service role key.
- *
- * Nota: el área del usuario NO viaja aquí. `app_metadata` solo se sincroniza
- * a mano al crear el usuario en Supabase y puede quedar desactualizada
- * respecto a `usuario.area_id` en Postgres; los casos de uso que necesiten
- * el área siempre la resuelven desde el `UsuarioRepository` (fuente de verdad).
- */
+interface TokenPayload {
+  sub: string;
+  email: string;
+  rol: Rol;
+}
+
 export async function authMiddleware(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
-    throw new UnauthorizedError('Falta el token de autenticación');
-  }
+  if (!header?.startsWith('Bearer ')) throw new UnauthorizedError('Falta el token de autenticación');
 
-  const token = header.slice('Bearer '.length);
-  const { data, error } = await supabaseAdmin.auth.getUser(token);
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET no está configurado');
 
-  if (error || !data.user) {
+  try {
+    const payload = jwt.verify(header.slice('Bearer '.length), secret) as TokenPayload;
+    req.user = { id: payload.sub, email: payload.email, rol: payload.rol };
+    next();
+  } catch {
     throw new UnauthorizedError('Token inválido o expirado');
   }
-
-  req.user = {
-    id: data.user.id,
-    email: data.user.email ?? '',
-    rol: (data.user.app_metadata?.rol as Rol) ?? 'asistente',
-  };
-  next();
 }

@@ -52,7 +52,8 @@ export async function buildActaWordBuffer(acta: ActaResponseDTO, acuerdos: Acuer
         rows: [
           new TableRow({
             children: [
-              celda('Compromiso', { negrita: true, ancho: 40 }),
+              celda('Compromiso', { negrita: true, ancho: 35 }),
+              celda('Responsable', { negrita: true, ancho: 20 }),
               celda('Fecha límite', { negrita: true, ancho: 15 }),
               celda('Estado', { negrita: true, ancho: 15 }),
               celda('Avance', { negrita: true, ancho: 15 }),
@@ -62,7 +63,8 @@ export async function buildActaWordBuffer(acta: ActaResponseDTO, acuerdos: Acuer
             (acuerdo) =>
               new TableRow({
                 children: [
-                  celda(acuerdo.descripcion, { ancho: 40 }),
+                  celda(acuerdo.descripcion, { ancho: 35 }),
+                  celda(acuerdo.responsableNombre ?? 'Sin asignar', { ancho: 20 }),
                   celda(new Date(acuerdo.fechaFin).toLocaleDateString('es-PE'), { ancho: 15 }),
                   celda(SEMAFORO_LABEL[acuerdo.estadoSemaforo] ?? acuerdo.estadoSemaforo, { ancho: 15 }),
                   celda(`${acuerdo.porcentajeAvance}%`, { ancho: 15 }),
@@ -82,7 +84,6 @@ export async function buildActaWordBuffer(acta: ActaResponseDTO, acuerdos: Acuer
           datosTable,
           ...seccionTexto('Objetivo de la reunión', acta.objetivo),
           ...seccionTexto('Agenda de la reunión', acta.agenda),
-          ...seccionTexto('Desarrollo de la reunión', acta.desarrollo),
           new Paragraph({ text: 'Acuerdos y compromisos', heading: HeadingLevel.HEADING_2, spacing: { before: 240, after: 120 } }),
           acuerdosTable,
         ],

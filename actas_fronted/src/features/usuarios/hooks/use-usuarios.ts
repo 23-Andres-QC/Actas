@@ -1,11 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usuariosApi } from '../api/usuarios.api';
-import { Usuario } from '../types';
+import { CrearUsuarioInput, Usuario } from '../types';
 
 export function useUsuarios(areaId?: string) {
   return useQuery({
     queryKey: ['usuarios', areaId],
     queryFn: () => usuariosApi.listar(areaId),
+  });
+}
+
+export function useCrearUsuario() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CrearUsuarioInput) => usuariosApi.crear(input),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['usuarios'] }),
   });
 }
 

@@ -14,7 +14,6 @@ export interface ActaResponseDTO {
   horaFin: string;
   objetivo: string;
   agenda: string;
-  desarrollo: string;
   urlGrabacion: string | null;
   urlActaFisica: string | null;
   porcentajeAvance: number;
@@ -33,7 +32,6 @@ export interface CrearActaDTO {
   horaFin: string;
   objetivo: string;
   agenda: string;
-  desarrollo: string;
 }
 
 export function toActaResponseDTO(acta: Acta): ActaResponseDTO {
@@ -51,7 +49,6 @@ export function toActaResponseDTO(acta: Acta): ActaResponseDTO {
     horaFin: acta.horaFin,
     objetivo: acta.objetivo,
     agenda: acta.agenda,
-    desarrollo: acta.desarrollo,
     urlGrabacion: acta.urlGrabacion,
     urlActaFisica: acta.urlActaFisica,
     porcentajeAvance: acta.porcentajeAvance.value,
