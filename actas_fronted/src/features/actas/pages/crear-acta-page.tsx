@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import { useCrearActa } from '../hooks/use-actas';
 import { PageHeader } from '../../../components/page-header';
 import { Card } from '../../../components/ui/card';
@@ -10,6 +10,8 @@ import { Textarea } from '../../../components/ui/textarea';
 import { Button } from '../../../components/ui/button';
 import { Proceso, TipoReunion } from '../types';
 import { useAreas } from '../../areas/hooks/use-areas';
+import { GeminiChat } from '../components/gemini-chat';
+import type { ActaAutocompletado } from '../components/gemini-chat';
 
 const selectClass =
   'flex h-11 w-full rounded-xl border border-input bg-background px-3.5 py-2 text-sm shadow-sm transition-all hover:border-accent/60 focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30';
@@ -29,6 +31,20 @@ export function CrearActaPage() {
   const [horaFin, setHoraFin] = useState('');
   const [objetivo, setObjetivo] = useState('');
   const [agenda, setAgenda] = useState('');
+  const [chatAbierto, setChatAbierto] = useState(false);
+
+  const handleAutocompletar = (datos: ActaAutocompletado) => {
+    if (datos.titulo) setTitulo(datos.titulo);
+    if (datos.tipoReunion) setTipoReunion(datos.tipoReunion);
+    if (datos.proceso) setProceso(datos.proceso);
+    if (datos.areaId) setAreaId(datos.areaId);
+    if (datos.lugar) setLugar(datos.lugar);
+    if (datos.fecha) setFecha(datos.fecha);
+    if (datos.horaInicio) setHoraInicio(datos.horaInicio);
+    if (datos.horaFin) setHoraFin(datos.horaFin);
+    if (datos.objetivo) setObjetivo(datos.objetivo);
+    if (datos.agenda) setAgenda(datos.agenda);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -50,7 +66,17 @@ export function CrearActaPage() {
 
   return (
     <section className="mx-auto max-w-4xl">
-      <PageHeader eyebrow="Nuevo registro" title="Crear acta" description="Completa la información oficial de la reunión. Después podrás agregar acuerdos, responsables y asistentes." />
+      <PageHeader
+        eyebrow="Nuevo registro"
+        title="Crear acta"
+        description="Completa la información oficial de la reunión. Después podrás agregar acuerdos, responsables y asistentes."
+        action={
+          <Button type="button" variant="outline" onClick={() => setChatAbierto(true)} className="gap-2">
+            <Sparkles className="size-4" />
+            Completar con IA
+          </Button>
+        }
+      />
 
       <Card className="border-border/70 p-5 sm:p-7">
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -144,6 +170,14 @@ export function CrearActaPage() {
           </div>
         </form>
       </Card>
+
+      {chatAbierto && (
+        <GeminiChat
+          areas={areas ?? []}
+          onAutocompletar={handleAutocompletar}
+          onCerrar={() => setChatAbierto(false)}
+        />
+      )}
     </section>
   );
 }
