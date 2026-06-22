@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Clock3, Eye, FileCheck2, MapPin, QrCode, Upload } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Clock3, Eye, FileCheck2, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
@@ -8,6 +8,7 @@ import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
 import { QrActaModal } from './qr-acta-modal';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
+import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
   estrategico: 'Estratégico',
@@ -22,6 +23,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subirActaFisica = useSubirActaFisica();
   const [mostrarQr, setMostrarQr] = useState(false);
+  const [mostrarCrearAcuerdo, setMostrarCrearAcuerdo] = useState(false);
   const [expandida, setExpandida] = useState(false);
   const { data: acuerdos, isLoading: cargandoAcuerdos, isError: errorAcuerdos } = useAcuerdosPorActa(expandida ? acta.id : '');
 
@@ -164,12 +166,25 @@ export function ActaCard({ acta }: { acta: Acta }) {
                 {acuerdos?.length ?? 0} acuerdo{acuerdos?.length === 1 ? '' : 's'} registrado{acuerdos?.length === 1 ? '' : 's'}
               </p>
             </div>
-            <Link
-              to={`/app/actas/${acta.id}`}
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              Gestionar acuerdos
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                title="Agregar acuerdo"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setMostrarCrearAcuerdo(true);
+                }}
+                className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+              >
+                <PlusCircle className="size-3.5" /> Agregar
+              </button>
+              <Link
+                to={`/app/actas/${acta.id}`}
+                className="text-xs font-semibold text-primary hover:underline"
+              >
+                Gestionar acuerdos
+              </Link>
+            </div>
           </div>
 
           {cargandoAcuerdos && <div className="h-16 animate-pulse rounded-lg border bg-card" />}
@@ -201,6 +216,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
         </div>
       )}
       {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
+      {mostrarCrearAcuerdo && <CrearAcuerdoModal actaId={acta.id} onClose={() => setMostrarCrearAcuerdo(false)} />}
     </div>
   );
 }
