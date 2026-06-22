@@ -1,14 +1,16 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Clock3, Eye, FileCheck2, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Circle, Clock3, Eye, FileCheck2, FileSearch, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
+import { Button } from '../../../components/ui/button';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
 import { QrActaModal } from './qr-acta-modal';
-import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
+import { useAcuerdosPorActa, useActualizarAvanceAcuerdo } from '../../acuerdos/hooks/use-acuerdos';
 import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
+import { EvidenciasModal } from '../../acuerdos/components/evidencias-modal';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
   estrategico: 'Estratégico',
@@ -24,8 +26,14 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const subirActaFisica = useSubirActaFisica();
   const [mostrarQr, setMostrarQr] = useState(false);
   const [mostrarCrearAcuerdo, setMostrarCrearAcuerdo] = useState(false);
+  const [acuerdoEvidencias, setAcuerdoEvidencias] = useState<string | null>(null);
   const [expandida, setExpandida] = useState(false);
   const { data: acuerdos, isLoading: cargandoAcuerdos, isError: errorAcuerdos } = useAcuerdosPorActa(expandida ? acta.id : '');
+  const actualizarAvance = useActualizarAvanceAcuerdo(acta.id);
+
+  const toggleCumplido = (id: string, cumplido: boolean) => {
+    actualizarAvance.mutate({ id, porcentajeAvance: cumplido ? 100 : 0 });
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
@@ -166,25 +174,17 @@ export function ActaCard({ acta }: { acta: Acta }) {
                 {acuerdos?.length ?? 0} acuerdo{acuerdos?.length === 1 ? '' : 's'} registrado{acuerdos?.length === 1 ? '' : 's'}
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                title="Agregar acuerdo"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMostrarCrearAcuerdo(true);
-                }}
-                className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-              >
-                <PlusCircle className="size-3.5" /> Agregar
-              </button>
-              <Link
-                to={`/app/actas/${acta.id}`}
-                className="text-xs font-semibold text-primary hover:underline"
-              >
-                Gestionar acuerdos
-              </Link>
-            </div>
+            <button
+              type="button"
+              title="Agregar acuerdo"
+              onClick={(event) => {
+                event.stopPropagation();
+                setMostrarCrearAcuerdo(true);
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <PlusCircle className="size-3.5" /> Agregar
+            </button>
           </div>
 
           {cargandoAcuerdos && <div className="h-16 animate-pulse rounded-lg border bg-card" />}
@@ -207,7 +207,36 @@ export function ActaCard({ acta }: { acta: Acta }) {
                         {acuerdo.responsableNombre ?? 'Sin responsable'} · vence {new Date(acuerdo.fechaFin).toLocaleDateString('es-PE')}
                       </p>
                     </div>
-                    <Badge variant={cumplido ? 'success' : 'secondary'}>{acuerdo.porcentajeAvance}%</Badge>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          toggleCumplido(acuerdo.id, !cumplido);
+                        }}
+                        disabled={actualizarAvance.isPending}
+                        title={cumplido ? 'Marcar como no cumplido' : 'Marcar como cumplido'}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 transition-colors hover:bg-muted disabled:opacity-50"
+                      >
+                        {cumplido ? (
+                          <><CheckCircle2 className="size-4 text-success" /><Badge variant="success">Sí</Badge></>
+                        ) : (
+                          <><Circle className="size-4 text-muted-foreground" /><Badge variant="secondary">No</Badge></>
+                        )}
+                      </button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setAcuerdoEvidencias(acuerdo.id);
+                        }}
+                      >
+                        <FileSearch className="size-3.5" /> Ver
+                      </Button>
+                      <Badge variant={cumplido ? 'success' : 'secondary'}>{acuerdo.porcentajeAvance}%</Badge>
+                    </div>
                   </div>
                 );
               })}
@@ -217,6 +246,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
       )}
       {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
       {mostrarCrearAcuerdo && <CrearAcuerdoModal actaId={acta.id} onClose={() => setMostrarCrearAcuerdo(false)} />}
+      {acuerdoEvidencias && <EvidenciasModal acuerdoId={acuerdoEvidencias} onClose={() => setAcuerdoEvidencias(null)} />}
     </div>
   );
 }

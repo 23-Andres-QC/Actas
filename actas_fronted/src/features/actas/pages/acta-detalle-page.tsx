@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
-import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
+import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
 import { actasApi } from '../api/actas.api';
 import { useAsistentesFirmados, useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { Card } from '../../../components/ui/card';
@@ -87,6 +87,7 @@ export function ActaDetallePage() {
         </div>
       </div>
       {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
+      {mostrarFormAcuerdo && <CrearAcuerdoModal actaId={acta.id} onClose={() => setMostrarFormAcuerdo(false)} />}
 
       <div className="rounded-3xl border border-border/70 bg-slate-200/65 p-3 shadow-inner sm:p-6 lg:p-10">
         <article className="mx-auto min-h-[760px] max-w-4xl bg-white px-5 py-8 text-slate-800 shadow-xl sm:px-10 sm:py-12 lg:px-16">
@@ -138,8 +139,6 @@ export function ActaDetallePage() {
           <footer className="mt-12 border-t border-slate-200 pt-4 text-center text-[10px] uppercase tracking-wider text-slate-400">Documento generado por Actas Institucionales</footer>
         </article>
       </div>
-
-      <AcuerdosPanel actaId={acta.id} abierto={mostrarFormAcuerdo} onAbiertoChange={setMostrarFormAcuerdo} />
 
       {puedeVerInasistentes && <div className="mt-8"><InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} /></div>}
     </section>
