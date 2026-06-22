@@ -229,6 +229,9 @@ fun FaceVerificationScreen(
                     val faceDetector = FaceDetection.getClient(options)
                     previewView.controller = cameraController
 
+                    cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)
+
                     cameraController.setImageAnalysisAnalyzer(
                         analysisExecutor,
                         MlKitAnalyzer(
@@ -276,9 +279,7 @@ fun FaceVerificationScreen(
                         },
                     )
 
-                    cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                     cameraController.bindToLifecycle(lifecycleOwner)
-                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)
                     previewView
                 },
             )

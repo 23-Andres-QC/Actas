@@ -151,6 +151,9 @@ fun FaceEnrollmentScreen(onContinuar: () -> Unit) {
                         .build()
                     val faceDetector = FaceDetection.getClient(options)
 
+                    cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
+                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)
+
                     cameraController.setImageAnalysisAnalyzer(
                         ContextCompat.getMainExecutor(ctx),
                         MlKitAnalyzer(
@@ -176,9 +179,7 @@ fun FaceEnrollmentScreen(onContinuar: () -> Unit) {
                         },
                     )
 
-                    cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                     cameraController.bindToLifecycle(lifecycleOwner)
-                    cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)
                     previewView.controller = cameraController
                     previewView
                 },
