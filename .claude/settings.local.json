@@ -1,7 +1,30 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ping -n 1 github.com)"
+      "Bash(ping -n 1 github.com)",
+      "Bash(git pull *)",
+      "Bash(curl -s -X POST http://localhost:4000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"asistente@institucion.edu\",\"password\":\"Admin123!\"}')",
+      "Bash(curl -s -o /dev/null -w \"vite 5173: %{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl -s -o /dev/null -w \"backend 4000: %{http_code}\\\\n\" http://localhost:4000/health)",
+      "Bash(curl -s -o /dev/null -w \"web docker 8080: %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(git stash *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(gh repo *)",
+      "Bash(curl -s -X POST http://localhost:4000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@institucion.edu\",\"password\":\"Admin123!\"}' -o /tmp/login.json)",
+      "Bash(node -e \"console.log\\(require\\('/tmp/login.json'\\).token\\)\")",
+      "Bash(curl -s http://localhost:4000/api/v1/usuarios -H 'Authorization: Bearer __TRACKED_VAR__')",
+      "Bash(curl -s -X POST http://localhost:4000/api/v1/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"admin@institucion.edu\",\"password\":\"Admin123!\"}')",
+      "Bash(mv 011_firma_y_qr.sql 011_firma_usuario.sql)",
+      "Read(//c/c/web/Actas/actas_backend/src/infrastructure/db/**)",
+      "Bash(docker volume *)",
+      "Bash(adb devices *)",
+      "Read(//c/Users/andre/AppData/Local/Android/**)",
+      "Read(//c/Users/andre/**)",
+      "Bash(/c/Users/andre/AppData/Local/Android/Sdk/platform-tools/adb.exe devices *)",
+      "Bash(/c/Users/andre/AppData/Local/Android/Sdk/platform-tools/adb.exe logcat *)",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/actas_log_full.txt)",
+      "Bash(/c/Users/andre/AppData/Local/Android/Sdk/platform-tools/adb.exe reverse *)"
     ]
   }
 }

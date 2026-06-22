@@ -2,6 +2,7 @@ package com.example.actas.ui.screens
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
@@ -42,6 +43,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
+import java.util.concurrent.Executors
 
 private const val FRAMES_REQUERIDOS = 5
 
@@ -76,6 +78,7 @@ fun FaceVerificationScreen(
     var error by remember { mutableStateOf<String?>(null) }
     var sinEnrolar by remember { mutableStateOf(false) }
     val cameraController = remember { LifecycleCameraController(context) }
+    val analysisExecutor = remember { Executors.newSingleThreadExecutor() }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -87,7 +90,11 @@ fun FaceVerificationScreen(
     }
 
     DisposableEffect(Unit) {
-        onDispose { cameraController.unbind() }
+        onDispose {
+            cameraController.clearImageAnalysisAnalyzer()
+            cameraController.unbind()
+            analysisExecutor.shutdown()
+        }
     }
 
     fun enviarAsistenciaConFirmaGuardada(bytes: ByteArray) {
@@ -223,44 +230,47 @@ fun FaceVerificationScreen(
                     previewView.controller = cameraController
 
                     cameraController.setImageAnalysisAnalyzer(
-                        ContextCompat.getMainExecutor(ctx),
+                        analysisExecutor,
                         MlKitAnalyzer(
                             listOf(faceDetector),
                             androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED,
-                            ContextCompat.getMainExecutor(ctx),
+                            analysisExecutor,
                         ) { result ->
-                            if (procesando) return@MlKitAnalyzer
                             val rostro = result?.getValue(faceDetector)?.firstOrNull()
-                            val anchoVista = previewView.width.toFloat()
-                            val altoVista = previewView.height.toFloat()
-                            val caja = rostro?.boundingBox
-                            val rostroCentrado = caja != null && anchoVista > 0f && altoVista > 0f &&
-                                kotlin.math.abs(caja.centerX() - anchoVista / 2f) < anchoVista * 0.2f &&
-                                kotlin.math.abs(caja.centerY() - altoVista * 0.45f) < altoVista * 0.22f
+                            val caja = rostro?.boundingBox?.let(::Rect)
                             val ojosAbiertos = rostro != null &&
                                 (rostro.leftEyeOpenProbability ?: 0f) > 0.4f &&
                                 (rostro.rightEyeOpenProbability ?: 0f) > 0.4f
 
-                            when {
-                                rostro == null -> {
-                                    framesConRostro = 0
-                                    rostroListo = false
-                                    mensaje = "Ubica tu rostro dentro del óvalo"
-                                }
-                                !rostroCentrado -> {
-                                    framesConRostro = 0
-                                    rostroListo = false
-                                    mensaje = "Centra tu rostro dentro del óvalo"
-                                }
-                                !ojosAbiertos -> {
-                                    framesConRostro = 0
-                                    rostroListo = false
-                                    mensaje = "Mantén los ojos abiertos"
-                                }
-                                else -> {
-                                    framesConRostro = (framesConRostro + 1).coerceAtMost(FRAMES_REQUERIDOS)
-                                    rostroListo = framesConRostro >= FRAMES_REQUERIDOS
-                                    mensaje = if (rostroListo) "Rostro centrado. Validando..." else "Mantén la posición..."
+                            ContextCompat.getMainExecutor(ctx).execute actualizarUi@{
+                                if (procesando) return@actualizarUi
+                                val anchoVista = previewView.width.toFloat()
+                                val altoVista = previewView.height.toFloat()
+                                val rostroCentrado = caja != null && anchoVista > 0f && altoVista > 0f &&
+                                    kotlin.math.abs(caja.centerX() - anchoVista / 2f) < anchoVista * 0.2f &&
+                                    kotlin.math.abs(caja.centerY() - altoVista * 0.45f) < altoVista * 0.22f
+
+                                when {
+                                    caja == null -> {
+                                        framesConRostro = 0
+                                        rostroListo = false
+                                        mensaje = "Ubica tu rostro dentro del óvalo"
+                                    }
+                                    !rostroCentrado -> {
+                                        framesConRostro = 0
+                                        rostroListo = false
+                                        mensaje = "Centra tu rostro dentro del óvalo"
+                                    }
+                                    !ojosAbiertos -> {
+                                        framesConRostro = 0
+                                        rostroListo = false
+                                        mensaje = "Mantén los ojos abiertos"
+                                    }
+                                    else -> {
+                                        framesConRostro = (framesConRostro + 1).coerceAtMost(FRAMES_REQUERIDOS)
+                                        rostroListo = framesConRostro >= FRAMES_REQUERIDOS
+                                        mensaje = if (rostroListo) "Rostro centrado. Validando..." else "Mantén la posición..."
+                                    }
                                 }
                             }
                         },
