@@ -5,5 +5,6 @@ export interface AcuerdoRepository {
   findByActaId(actaId: string): Promise<Acuerdo[]>;
   findByResponsableId(responsableId: string): Promise<Acuerdo[]>;
   findTieneEvidenciasByActaId(actaId: string): Promise<Map<string, boolean>>;
+  reordenar(items: { id: string; orden: number }[]): Promise<void>;
   save(acuerdo: Acuerdo): Promise<void>;
 }

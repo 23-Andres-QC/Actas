@@ -33,7 +33,7 @@ export class PostgresAccionRepository implements AccionRepository {
 
   public async findByAcuerdoId(acuerdoId: string): Promise<Accion[]> {
     const result = await this.pool.query<AccionRow>(
-      'select * from accion where acuerdo_id = $1 order by fecha_fin',
+      'select * from accion where acuerdo_id = $1 order by sort_order asc, created_at asc',
       [acuerdoId],
     );
     return result.rows.map(toDomain);
@@ -47,5 +47,22 @@ export class PostgresAccionRepository implements AccionRepository {
          descripcion = $3, fecha_fin = $4, completada = $5`,
       [accion.id, accion.acuerdoId, accion.descripcion, accion.fechaFin, accion.completada],
     );
+  }
+
+  public async reordenar(items: { id: string; orden: number }[]): Promise<void> {
+    if (!items.length) return;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const { id, orden } of items) {
+        await client.query('UPDATE accion SET sort_order = $1 WHERE id = $2', [orden, id]);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 }

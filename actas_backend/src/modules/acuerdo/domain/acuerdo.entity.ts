@@ -64,4 +64,14 @@ export class Acuerdo extends Entity<AcuerdoProps> {
     this.props.porcentajeAvance = PorcentajeAvance.create(nuevoPorcentaje);
     this.props.estadoSemaforo = Semaforo.calcular(nuevoPorcentaje, this.props.fechaFin);
   }
+
+  public editar(campos: { descripcion?: string; responsableId?: string; fechaInicio?: Date; fechaFin?: Date }): void {
+    if (campos.descripcion !== undefined) this.props.descripcion = campos.descripcion;
+    if (campos.responsableId !== undefined) this.props.responsableId = campos.responsableId;
+    if (campos.fechaInicio !== undefined) this.props.fechaInicio = campos.fechaInicio;
+    if (campos.fechaFin !== undefined) {
+      this.props.fechaFin = campos.fechaFin;
+      this.props.estadoSemaforo = Semaforo.calcular(this.props.porcentajeAvance.value, campos.fechaFin);
+    }
+  }
 }

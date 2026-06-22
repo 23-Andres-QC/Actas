@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Building2, FileText, FilePlus2, Users, X, type LucideIcon } from 'lucide-react';
+import { Building2, ClipboardCheck, FileText, FilePlus2, Users, X, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Rol } from '@/shared/auth/auth-context';
 
@@ -13,6 +13,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { title: 'Actas y acuerdos', to: '/app', icon: FileText },
+  { title: 'Mis compromisos', to: '/app/mis-compromisos', icon: ClipboardCheck },
   { title: 'Crear acta', to: '/app/actas/nueva', icon: FilePlus2, roles: ['superadmin', 'convocador'] },
   { title: 'Usuarios y roles', to: '/app/usuarios', icon: Users, roles: ['superadmin'], allowJefe: true },
   { title: 'Áreas', to: '/app/areas', icon: Building2, roles: ['superadmin'] },

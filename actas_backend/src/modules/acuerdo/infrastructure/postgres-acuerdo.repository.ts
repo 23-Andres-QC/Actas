@@ -41,7 +41,7 @@ export class PostgresAcuerdoRepository implements AcuerdoRepository {
 
   public async findByActaId(actaId: string): Promise<Acuerdo[]> {
     const result = await this.pool.query<AcuerdoRow>(
-      'select * from acuerdo where acta_id = $1 order by fecha_fin',
+      'select * from acuerdo where acta_id = $1 order by sort_order asc, created_at asc',
       [actaId],
     );
     return result.rows.map(toDomain);
@@ -66,6 +66,23 @@ export class PostgresAcuerdoRepository implements AcuerdoRepository {
     const conEvidencias = new Set(result.rows.map((r) => r.acuerdo_id));
     const acuerdos = await this.findByActaId(actaId);
     return new Map(acuerdos.map((a) => [a.id, conEvidencias.has(a.id)]));
+  }
+
+  public async reordenar(items: { id: string; orden: number }[]): Promise<void> {
+    if (!items.length) return;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const { id, orden } of items) {
+        await client.query('UPDATE acuerdo SET sort_order = $1 WHERE id = $2', [orden, id]);
+      }
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   public async save(acuerdo: Acuerdo): Promise<void> {

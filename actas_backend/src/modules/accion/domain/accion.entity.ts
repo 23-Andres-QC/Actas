@@ -39,4 +39,9 @@ export class Accion extends Entity<AccionProps> {
   public marcarCompletada(completada: boolean): void {
     this.props.completada = completada;
   }
+
+  public editar(campos: { descripcion?: string; fechaFin?: Date }): void {
+    if (campos.descripcion !== undefined) this.props.descripcion = campos.descripcion;
+    if (campos.fechaFin !== undefined) this.props.fechaFin = campos.fechaFin;
+  }
 }

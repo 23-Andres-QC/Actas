@@ -110,3 +110,62 @@ export function useConsejos() {
       analizarConGemini(acta, acuerdos),
   });
 }
+
+export interface ResumenActa {
+  resumenReunion: string;
+  estadoGeneral: 'bueno' | 'en_riesgo' | 'critico';
+  loQueSeHaHecho: string[];
+  loQueFaltaPorHacer: string[];
+  acuerdosEnRiesgo: { id: string; descripcion: string; razon: string }[];
+}
+
+async function generarResumenGemini(acta: Acta, acuerdos: Acuerdo[]): Promise<ResumenActa> {
+  const hoy = new Date().toISOString().split('T')[0];
+  const semaforoLabel = (s: string) =>
+    s === 'verde' ? 'En tiempo' : s === 'amarillo' ? 'En riesgo' : 'Vencido/Crítico';
+
+  const completados = acuerdos.filter((a) => a.porcentajeAvance >= 100).length;
+  const enRiesgo = acuerdos.filter((a) => a.estadoSemaforo === 'rojo' || a.estadoSemaforo === 'amarillo').length;
+
+  const prompt = `Eres un asesor estratégico institucional. Genera un resumen ejecutivo completo del acta de reunión.
+
+ACTA:
+- Título: ${acta.titulo}
+- Fecha: ${new Date(acta.fecha).toLocaleDateString('es-CO')}
+- Objetivo: ${acta.objetivo ?? 'No especificado'}
+- Agenda: ${acta.agenda ?? 'No especificada'}
+- Avance general: ${acta.porcentajeAvance}% (${completados} de ${acuerdos.length} acuerdos completados, ${enRiesgo} en riesgo)
+- Fecha de análisis: ${hoy}
+
+ACUERDOS:
+${acuerdos.map((a) => `- [${semaforoLabel(a.estadoSemaforo)}] ${a.descripcion} | ${a.porcentajeAvance}% | Vence: ${new Date(a.fechaFin).toLocaleDateString('es-CO')}`).join('\n')}
+
+Responde ÚNICAMENTE con JSON válido sin markdown:
+{
+  "resumenReunion": "2-3 oraciones que resuman qué fue esta reunión, su propósito y contexto general",
+  "estadoGeneral": "bueno" | "en_riesgo" | "critico",
+  "loQueSeHaHecho": ["logro o avance concreto alcanzado hasta ahora — usa verbos en pasado"],
+  "loQueFaltaPorHacer": ["tarea o compromiso pendiente concreto — usa verbos en infinitivo"],
+  "acuerdosEnRiesgo": [{ "id": "<id exacto del acuerdo>", "descripcion": "<texto del acuerdo>", "razon": "<por qué está en riesgo en 1 oración>" }]
+}
+estadoGeneral: "bueno" si todos en tiempo, "en_riesgo" si hay amarillos, "critico" si hay rojos.`;
+
+  const res = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  });
+
+  if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+  const data = await res.json();
+  const texto: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const limpio = texto.replace(/```json|```/g, '').trim();
+  return JSON.parse(limpio) as ResumenActa;
+}
+
+export function useResumenActa() {
+  return useMutation({
+    mutationFn: ({ acta, acuerdos }: { acta: Acta; acuerdos: Acuerdo[] }) =>
+      generarResumenGemini(acta, acuerdos),
+  });
+}

@@ -18,6 +18,8 @@ export function acuerdoRoutes(controller: AcuerdoController): Router {
   const router = Router();
   router.use(asyncHandler(authMiddleware));
   router.get('/mios', asyncHandler(controller.listarMios));
+  router.patch('/reordenar', requireRole('superadmin', 'convocador'), asyncHandler(controller.reordenarHandler));
   router.patch('/:id/avance', requireRole('superadmin', 'convocador', 'admin', 'asistente'), asyncHandler(controller.actualizarAvanceHandler));
+  router.patch('/:id', requireRole('superadmin', 'convocador'), asyncHandler(controller.editarHandler));
   return router;
 }

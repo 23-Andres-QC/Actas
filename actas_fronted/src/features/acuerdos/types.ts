@@ -9,6 +9,7 @@ export interface Acuerdo {
   estadoSemaforo: 'verde' | 'amarillo' | 'rojo';
   porcentajeAvance: number;
   tieneEvidencias: boolean;
+  orden?: number;
 }
 
 export interface CrearAcuerdoInput {
@@ -24,11 +25,16 @@ export interface Accion {
   descripcion: string;
   fechaFin: string;
   completada: boolean;
+  orden?: number;
 }
 
 export interface CrearAccionInput {
   descripcion: string;
   fechaFin: string;
+}
+
+export interface MiAcuerdo extends Acuerdo {
+  actaTitulo: string;
 }
 
 export interface EvidenciaAccion {

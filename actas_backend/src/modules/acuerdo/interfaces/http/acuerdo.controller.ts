@@ -3,7 +3,9 @@ import { CrearAcuerdoUseCase } from '../../application/use-cases/crear-acuerdo.u
 import { ListarAcuerdosPorActaUseCase } from '../../application/use-cases/listar-acuerdos-por-acta.use-case';
 import { ListarAcuerdosPorResponsableUseCase } from '../../application/use-cases/listar-acuerdos-por-responsable.use-case';
 import { ActualizarAvanceAcuerdoUseCase } from '../../application/use-cases/actualizar-avance-acuerdo.use-case';
-import { crearAcuerdoSchema, actualizarAvanceSchema } from './acuerdo.validators';
+import { EditarAcuerdoUseCase } from '../../application/use-cases/editar-acuerdo.use-case';
+import { ReordenarAcuerdosUseCase } from '../../application/use-cases/reordenar-acuerdos.use-case';
+import { crearAcuerdoSchema, actualizarAvanceSchema, editarAcuerdoSchema, reordenarSchema } from './acuerdo.validators';
 import { UnauthorizedError } from '../../../../shared/errors/domain-error';
 
 export class AcuerdoController {
@@ -12,6 +14,8 @@ export class AcuerdoController {
     private readonly listarPorActa: ListarAcuerdosPorActaUseCase,
     private readonly actualizarAvance: ActualizarAvanceAcuerdoUseCase,
     private readonly listarPorResponsable: ListarAcuerdosPorResponsableUseCase,
+    private readonly editarAcuerdo: EditarAcuerdoUseCase,
+    private readonly reordenarAcuerdos: ReordenarAcuerdosUseCase,
   ) {}
 
   public listarMios = async (req: Request, res: Response): Promise<void> => {
@@ -41,5 +45,17 @@ export class AcuerdoController {
       req.user.rol,
     );
     res.json(acuerdo);
+  };
+
+  public editarHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = editarAcuerdoSchema.parse(req.body);
+    const acuerdo = await this.editarAcuerdo.execute(req.params.id as string, body);
+    res.json(acuerdo);
+  };
+
+  public reordenarHandler = async (req: Request, res: Response): Promise<void> => {
+    const body = reordenarSchema.parse(req.body);
+    await this.reordenarAcuerdos.execute(body.items);
+    res.json({ ok: true });
   };
 }

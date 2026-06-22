@@ -16,6 +16,8 @@ export function accionNestedRoutes(controller: AccionController): Router {
 export function accionRoutes(controller: AccionController): Router {
   const router = Router();
   router.use(asyncHandler(authMiddleware));
+  router.patch('/reordenar', asyncHandler(controller.reordenarHandler));
   router.patch('/:id/completada', asyncHandler(controller.actualizarCompletadaHandler));
+  router.patch('/:id', asyncHandler(controller.editarHandler));
   return router;
 }

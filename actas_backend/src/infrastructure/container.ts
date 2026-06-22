@@ -30,6 +30,8 @@ import { CrearAcuerdoUseCase } from '../modules/acuerdo/application/use-cases/cr
 import { ListarAcuerdosPorActaUseCase } from '../modules/acuerdo/application/use-cases/listar-acuerdos-por-acta.use-case';
 import { ListarAcuerdosPorResponsableUseCase } from '../modules/acuerdo/application/use-cases/listar-acuerdos-por-responsable.use-case';
 import { ActualizarAvanceAcuerdoUseCase } from '../modules/acuerdo/application/use-cases/actualizar-avance-acuerdo.use-case';
+import { EditarAcuerdoUseCase } from '../modules/acuerdo/application/use-cases/editar-acuerdo.use-case';
+import { ReordenarAcuerdosUseCase } from '../modules/acuerdo/application/use-cases/reordenar-acuerdos.use-case';
 import { AcuerdoController } from '../modules/acuerdo/interfaces/http/acuerdo.controller';
 
 // Acción
@@ -38,6 +40,8 @@ import { RecalcularAvanceActaService } from '../modules/acuerdo/application/serv
 import { CrearAccionUseCase } from '../modules/accion/application/use-cases/crear-accion.use-case';
 import { ListarAccionesPorAcuerdoUseCase } from '../modules/accion/application/use-cases/listar-acciones-por-acuerdo.use-case';
 import { ActualizarCompletadaAccionUseCase } from '../modules/accion/application/use-cases/actualizar-completada-accion.use-case';
+import { EditarAccionUseCase } from '../modules/accion/application/use-cases/editar-accion.use-case';
+import { ReordenarAccionesUseCase } from '../modules/accion/application/use-cases/reordenar-acciones.use-case';
 import { AccionController } from '../modules/accion/interfaces/http/accion.controller';
 
 // Evidencia de acción
@@ -114,6 +118,8 @@ export function buildContainer(pool: Pool) {
     new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository),
     new ActualizarAvanceAcuerdoUseCase(acuerdoRepository, actaRepository, avanceAcuerdosProvider),
     new ListarAcuerdosPorResponsableUseCase(acuerdoRepository, actaRepository),
+    new EditarAcuerdoUseCase(acuerdoRepository, usuarioRepository),
+    new ReordenarAcuerdosUseCase(acuerdoRepository),
   );
 
   const asistenciaRepository = new PostgresAsistenciaRepository(pool);
@@ -139,6 +145,8 @@ export function buildContainer(pool: Pool) {
     new CrearAccionUseCase(accionRepository, acuerdoRepository, recalcularAvanceActaService),
     new ListarAccionesPorAcuerdoUseCase(accionRepository),
     new ActualizarCompletadaAccionUseCase(accionRepository, acuerdoRepository, recalcularAvanceActaService),
+    new EditarAccionUseCase(accionRepository),
+    new ReordenarAccionesUseCase(accionRepository),
   );
 
   const evidenciaAccionRepository = new PostgresEvidenciaAccionRepository(pool);
