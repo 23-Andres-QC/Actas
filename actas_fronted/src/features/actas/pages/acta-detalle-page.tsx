@@ -1,19 +1,18 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, BrainCircuit, CalendarDays, CheckSquare, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, QrCode, Upload, UserX } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, CalendarDays, CheckSquare, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
 import { useActa, useConsejos } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
-import { ConsejoAcuerdo } from '../types';
-
-import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
+import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
 import { actasApi } from '../api/actas.api';
-import { useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
+import { ConsejoAcuerdo } from '../types';
+import { useAsistentesFirmados, useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { Card } from '../../../components/ui/card';
 import { Badge } from '../../../components/ui/badge';
 import { Button } from '../../../components/ui/button';
 import { SemaforoBadge, ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
-import { Inasistente } from '../../asistencia/types';
+import { AsistenteFirmado, Inasistente } from '../../asistencia/types';
 import { QrActaModal } from '../components/qr-acta-modal';
 
 const TIPO_REUNION_LABEL: Record<string, string> = { interna: 'Interna', externa: 'Externa' };
@@ -29,6 +28,7 @@ export function ActaDetallePage() {
   const [mostrarQr, setMostrarQr] = useState(false);
   const [consejos, setConsejos] = useState<ConsejoAcuerdo[]>([]);
   const obtenerConsejos = useConsejos();
+  const [mostrarFormAcuerdo, setMostrarFormAcuerdo] = useState(false);
 
   if (isLoading) return <div className="h-[70vh] animate-pulse rounded-2xl border bg-card" />;
   if (isError || !acta) return <Card className="p-8 text-center text-sm font-medium text-destructive">No se pudo cargar el acta.</Card>;
@@ -84,9 +84,13 @@ export function ActaDetallePage() {
           <Button variant="outline" size="lg" onClick={() => setMostrarQr(true)} title="Ver QR de asistencia">
             <QrCode />
           </Button>
+          <Button variant="outline" size="lg" onClick={() => setMostrarFormAcuerdo(true)} className="gap-2">
+            <PlusCircle /> Agregar acuerdo
+          </Button>
         </div>
       </div>
       {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
+      {mostrarFormAcuerdo && <CrearAcuerdoModal actaId={acta.id} onClose={() => setMostrarFormAcuerdo(false)} />}
 
       <div className="rounded-3xl border border-border/70 bg-slate-200/65 p-3 shadow-inner sm:p-6 lg:p-10">
         <article className="mx-auto min-h-[760px] max-w-4xl bg-white px-5 py-8 text-slate-800 shadow-xl sm:px-10 sm:py-12 lg:px-16">
@@ -168,7 +172,7 @@ export function ActaDetallePage() {
                               <p className="mt-0.5 text-xs leading-relaxed text-slate-700">{consejo.consejo}</p>
                               {consejo.acciones.length > 0 && (
                                 <ul className="mt-2 space-y-1">
-                                  {consejo.acciones.map((accion, i) => (
+                                  {consejo.acciones.map((accion: string, i: number) => (
                                     <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
                                       <CheckSquare className="mt-0.5 size-3 shrink-0 text-blue-500" />
                                       {accion}
@@ -187,11 +191,11 @@ export function ActaDetallePage() {
             )}
           </section>
 
+          <FirmasSection actaId={acta.id} />
+
           <footer className="mt-12 border-t border-slate-200 pt-4 text-center text-[10px] uppercase tracking-wider text-slate-400">Documento generado por Actas Institucionales</footer>
         </article>
       </div>
-
-      <AcuerdosPanel actaId={acta.id} />
 
       {puedeVerInasistentes && <div className="mt-8"><InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} /></div>}
     </section>
@@ -204,6 +208,35 @@ function DocumentField({ icon: Icon, label, value }: { icon: typeof CalendarDays
 
 function DocumentSection({ title, content }: { title: string; content: string }) {
   return <section className="mt-8"><h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">{title}</h3><p className="mt-3 whitespace-pre-line text-sm leading-7 text-slate-700">{content}</p></section>;
+}
+
+function FirmasSection({ actaId }: { actaId: string }) {
+  const { data: asistentes, isLoading } = useAsistentesFirmados(actaId);
+  if (isLoading || !asistentes?.length) return null;
+  return (
+    <section className="mt-8">
+      <h3 className="border-b border-slate-200 pb-2 font-display text-lg font-bold text-blue-950">Firmas de asistencia</h3>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {asistentes.map((asistente) => <FirmaCard key={asistente.usuarioId} asistente={asistente} />)}
+      </div>
+    </section>
+  );
+}
+
+function FirmaCard({ asistente }: { asistente: AsistenteFirmado }) {
+  return (
+    <div className="flex flex-col items-center rounded-xl border border-slate-200 p-3 text-center">
+      <div className="grid h-20 w-full place-items-center overflow-hidden rounded-lg bg-slate-50">
+        {asistente.firmaUrl ? (
+          <img src={asistente.firmaUrl} alt={`Firma de ${asistente.nombre}`} className="h-16 w-auto max-w-[75%] object-contain" />
+        ) : (
+          <Signature className="size-6 text-slate-300" />
+        )}
+      </div>
+      <p className="mt-2 border-t border-slate-300 pt-1 text-sm font-medium">{asistente.nombre}</p>
+      {asistente.cargo && <p className="text-xs text-slate-500">{asistente.cargo}</p>}
+    </div>
+  );
 }
 
 function InasistentesSection({ actaId, puedeSubirEvidencia }: { actaId: string; puedeSubirEvidencia: boolean }) {
