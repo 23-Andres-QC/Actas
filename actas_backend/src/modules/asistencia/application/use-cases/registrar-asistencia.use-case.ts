@@ -5,6 +5,8 @@ import { ActaRepository } from '../../../acta/domain/acta.repository';
 import { StoragePort } from '../../../evidencia/domain/storage.port';
 import { FIRMAS_BUCKET } from '../../../../infrastructure/supabase/client';
 import { ForbiddenError, NotFoundError, ValidationError } from '../../../../shared/errors/domain-error';
+import { RegenerarDocumentoEditableUseCase } from '../../../acta/application/use-cases/regenerar-documento-editable.use-case';
+import { Rol } from '../../../../infrastructure/http/middlewares/auth.middleware';
 
 const TIPOS_FIRMA_PERMITIDOS = ['image/png', 'image/jpeg'];
 const TAMANO_MAXIMO_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -20,12 +22,14 @@ export class RegistrarAsistenciaUseCase {
     private readonly asistenciaRepository: AsistenciaRepository,
     private readonly storage: StoragePort,
     private readonly actaRepository: ActaRepository,
+    private readonly regenerarDocumentoEditable?: RegenerarDocumentoEditableUseCase,
   ) {}
 
   public async execute(
     actaId: string,
     usuarioId: string,
     metodo: MetodoAsistencia,
+    ejecutadoPorRol: Rol,
     firma?: FirmaInput,
     qrToken?: string,
   ): Promise<{ firmaUrl: string | null }> {
@@ -52,6 +56,13 @@ export class RegistrarAsistenciaUseCase {
     }
 
     await this.asistenciaRepository.save(asistencia);
+
+    try {
+      await this.regenerarDocumentoEditable?.execute(actaId, usuarioId, ejecutadoPorRol);
+    } catch (error) {
+      console.error('No se pudo regenerar el documento editable tras registrar la asistencia:', error);
+    }
+
     return { firmaUrl: asistencia.firmaUrl };
   }
 }

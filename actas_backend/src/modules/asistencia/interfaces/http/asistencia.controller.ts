@@ -22,6 +22,7 @@ export class AsistenciaController {
       req.params.actaId as string,
       req.user.id,
       body.metodo,
+      req.user.rol,
       req.file ? { buffer: req.file.buffer, mimeType: req.file.mimetype } : undefined,
       body.qrToken,
     );

@@ -157,7 +157,7 @@ export function buildContainer(pool: Pool) {
   const asistentesFirmadosProvider = new PostgresAsistentesFirmadosProvider(pool);
   const inasistenteRepository = new PostgresInasistenteRepository(pool);
   const asistenciaController = new AsistenciaController(
-    new RegistrarAsistenciaUseCase(asistenciaRepository, storage, actaRepository),
+    new RegistrarAsistenciaUseCase(asistenciaRepository, storage, actaRepository, regenerarDocumentoEditable),
     new ListarInasistentesUseCase(inasistentesProvider),
     new SubirEvidenciaInasistenciaUseCase(inasistenteRepository, storage),
     new ListarAsistentesFirmadosUseCase(asistentesFirmadosProvider),
