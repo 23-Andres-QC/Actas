@@ -168,7 +168,7 @@ function FirmaCard({ asistente }: { asistente: AsistenteFirmado }) {
     <div className="flex flex-col items-center rounded-xl border border-slate-200 p-3 text-center">
       <div className="grid h-20 w-full place-items-center overflow-hidden rounded-lg bg-slate-50">
         {asistente.firmaUrl ? (
-          <img src={asistente.firmaUrl} alt={`Firma de ${asistente.nombre}`} className="h-full w-full object-contain" />
+          <img src={asistente.firmaUrl} alt={`Firma de ${asistente.nombre}`} className="h-10 w-auto max-w-[60%] object-contain" />
         ) : (
           <Signature className="size-6 text-slate-300" />
         )}
