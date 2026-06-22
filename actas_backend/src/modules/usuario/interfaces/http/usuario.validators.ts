@@ -13,6 +13,11 @@ export const crearUsuarioSchema = z.object({
   cargo: z.string().trim().max(120).nullable().optional(),
 });
 
+export const asignarAreaSchema = z.object({
+  areaId: z.string().uuid().nullable(),
+  esJefe: z.boolean().default(false),
+});
+
 export const listarUsuariosQuerySchema = z.object({
   areaId: z.string().uuid().optional(),
 });

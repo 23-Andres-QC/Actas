@@ -9,9 +9,10 @@ export function usuarioRoutes(controller: UsuarioController): Router {
 
   router.use(asyncHandler(authMiddleware));
 
-  router.get('/', requireRole('superadmin', 'admin', 'convocador'), asyncHandler(controller.listar));
+  router.get('/', asyncHandler(controller.listar));
   router.post('/', requireRole('superadmin'), asyncHandler(controller.crear));
   router.patch('/:id/rol', requireRole('superadmin', 'admin'), asyncHandler(controller.asignarRolHandler));
+  router.patch('/:id/area', requireRole('superadmin'), asyncHandler(controller.asignarAreaHandler));
 
   return router;
 }

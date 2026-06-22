@@ -47,13 +47,14 @@ export function useAuth(): AuthState {
 }
 
 export function useRol() {
-  const { rol } = useAuth();
+  const { session, rol } = useAuth();
   return {
     rol,
     esSuperAdmin: rol === 'superadmin',
     esAdmin: rol === 'admin',
     esConvocador: rol === 'convocador',
     esAsistente: rol === 'asistente',
+    esJefe: session?.user.esJefe === true,
   };
 }
 

@@ -1,0 +1,21 @@
+NODE_ENV=development
+PORT=4000
+JWT_SECRET=J8xWz4Qp9Lm2Vn7Rc5Ty1Hs6Df3Kg8Ba0Eu4Zi7No2Mw9Xq5
+SEED_SUPERADMIN_EMAIL=admin@gmail.com
+SEED_SUPERADMIN_PASSWORD=admin1234
+SEED_ADMIN_EMAIL=admin.area@gmail.com
+SEED_ADMIN_PASSWORD=admin1234
+SEED_CONVOCADOR_EMAIL=convocador@gmail.com
+SEED_CONVOCADOR_PASSWORD=convocador1234
+SEED_ASISTENTE_EMAIL=asistente@gmail.com
+SEED_ASISTENTE_PASSWORD=asistente1234
+
+# Postgres (contenedor docker-compose, expuesto en 5433 para evitar choque con Postgres nativo de Windows en 5432)
+DATABASE_URL=postgresql://actas:actas@localhost:5432/actas
+
+# Supabase (claves nuevas: publishable/secret key, no el JWT secret legacy)
+SUPABASE_URL=https://ksxwqeljoqfsdrfbksvo.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_MmE32uWo-cpDXrU--W3A6A_l2xHAfj3
+
+# CORS
+CORS_ORIGIN=http://localhost:5173,http://localhost:8080

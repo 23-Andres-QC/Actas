@@ -1,9 +1,9 @@
+import { ForbiddenError } from '../../../../shared/errors/domain-error';
 import { UsuarioRepository } from '../../domain/usuario.repository';
 import { Rol } from '../../../../infrastructure/http/middlewares/auth.middleware';
-import { UsuarioResponseDTO, toUsuarioResponseDTO } from '../dto/usuario.dto';
+import { UsuarioResponseDTO, toUsuarioListadoDTO } from '../dto/usuario.dto';
 
 interface ListarUsuariosInput {
-  areaId?: string;
   ejecutadoPorId: string;
   ejecutadoPorRol: Rol;
 }
@@ -12,15 +12,17 @@ export class ListarUsuariosUseCase {
   constructor(private readonly usuarioRepository: UsuarioRepository) {}
 
   public async execute(input: ListarUsuariosInput): Promise<UsuarioResponseDTO[]> {
-    let areaId = input.areaId;
-
-    // Un Admin solo puede ver usuarios de su propia área, sin importar lo que pida por query param.
-    if (input.ejecutadoPorRol === 'admin' || input.ejecutadoPorRol === 'convocador') {
-      const ejecutor = await this.usuarioRepository.findById(input.ejecutadoPorId);
-      areaId = ejecutor?.areaId ?? undefined;
+    if (input.ejecutadoPorRol === 'superadmin') {
+      const todos = await this.usuarioRepository.findAllListado();
+      return todos.map(toUsuarioListadoDTO);
     }
 
-    const usuarios = await this.usuarioRepository.findAll({ areaId });
-    return usuarios.map(toUsuarioResponseDTO);
+    const ejecutor = await this.usuarioRepository.findById(input.ejecutadoPorId);
+    if (!ejecutor?.esJefe || !ejecutor.areaId) {
+      throw new ForbiddenError('Solo el SuperAdmin o el jefe de un área puede ver usuarios');
+    }
+
+    const desuArea = await this.usuarioRepository.findAllListado({ areaId: ejecutor.areaId });
+    return desuArea.map(toUsuarioListadoDTO);
   }
 }

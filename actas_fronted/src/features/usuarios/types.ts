@@ -6,6 +6,8 @@ export interface Usuario {
   email: string;
   rol: Rol;
   areaId: string | null;
+  areaNombre: string | null;
+  esJefe: boolean;
   cargo: string | null;
 }
 

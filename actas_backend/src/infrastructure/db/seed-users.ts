@@ -56,6 +56,7 @@ async function seedUsers(): Promise<void> {
           passwordHash: await hash(initialUser.password, 12),
           rol: Rol.create(initialUser.rol),
           areaId: null,
+          esJefe: false,
           cargo: initialUser.cargo,
         },
         randomUUID(),

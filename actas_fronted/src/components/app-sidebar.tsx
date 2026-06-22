@@ -8,23 +8,30 @@ interface NavItem {
   to: string;
   icon: LucideIcon;
   roles?: Rol[];
+  allowJefe?: boolean;
 }
 
 const NAV: NavItem[] = [
   { title: 'Actas y acuerdos', to: '/app', icon: FileText },
   { title: 'Crear acta', to: '/app/actas/nueva', icon: FilePlus2, roles: ['superadmin', 'convocador'] },
-  { title: 'Usuarios y roles', to: '/app/usuarios', icon: Users, roles: ['superadmin', 'admin'] },
+  { title: 'Usuarios y roles', to: '/app/usuarios', icon: Users, roles: ['superadmin'], allowJefe: true },
   { title: 'Áreas', to: '/app/areas', icon: Building2, roles: ['superadmin'] },
 ];
 
 interface AppSidebarProps {
   rol: Rol | null;
+  esJefe: boolean;
   open: boolean;
   onClose: () => void;
 }
 
-export function AppSidebar({ rol, open, onClose }: AppSidebarProps) {
-  const visible = NAV.filter((item) => !item.roles || (rol && item.roles.includes(rol)));
+export function AppSidebar({ rol, esJefe, open, onClose }: AppSidebarProps) {
+  const visible = NAV.filter((item) => {
+    if (!item.roles) return true;
+    if (rol && item.roles.includes(rol)) return true;
+    if (item.allowJefe && esJefe) return true;
+    return false;
+  });
 
   return (
     <>

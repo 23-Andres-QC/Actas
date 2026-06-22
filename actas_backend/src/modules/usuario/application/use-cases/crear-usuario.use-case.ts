@@ -35,6 +35,7 @@ export class CrearUsuarioUseCase {
         passwordHash: await hash(input.password, 12),
         rol: Rol.create(input.rol),
         areaId: input.areaId,
+        esJefe: false,
         cargo: input.cargo,
       },
       randomUUID(),

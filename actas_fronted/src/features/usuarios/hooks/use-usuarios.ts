@@ -27,3 +27,14 @@ export function useAsignarRol() {
     },
   });
 }
+
+export function useAsignarArea() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ usuarioId, areaId, esJefe }: { usuarioId: string; areaId: string | null; esJefe: boolean }) =>
+      usuariosApi.asignarArea(usuarioId, areaId, esJefe),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['usuarios'] });
+    },
+  });
+}

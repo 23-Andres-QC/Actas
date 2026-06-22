@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string;
   rol: Rol;
   areaId: string | null;
+  esJefe: boolean;
   cargo: string | null;
 }
 

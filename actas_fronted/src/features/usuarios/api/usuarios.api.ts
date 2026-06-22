@@ -6,4 +6,6 @@ export const usuariosApi = {
   crear: (input: CrearUsuarioInput) => httpClient.post<Usuario>('/usuarios', input),
   asignarRol: (usuarioId: string, rol: Usuario['rol']) =>
     httpClient.patch<Usuario>(`/usuarios/${usuarioId}/rol`, { rol }),
+  asignarArea: (usuarioId: string, areaId: string | null, esJefe: boolean) =>
+    httpClient.patch<Usuario>(`/usuarios/${usuarioId}/area`, { areaId, esJefe }),
 };

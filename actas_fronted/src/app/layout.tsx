@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, Menu } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AppSidebar } from '../components/app-sidebar';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -15,18 +16,20 @@ const ROLE_LABEL: Record<string, string> = {
 
 export function Layout() {
   const { session, signOut } = useAuth();
-  const { rol } = useRol();
+  const { rol, esJefe } = useRol();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSignOut = async () => {
+    queryClient.clear();
     await signOut();
     navigate('/', { replace: true });
   };
 
   return (
     <div className="flex min-h-screen w-full bg-background">
-      <AppSidebar rol={rol} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <AppSidebar rol={rol} esJefe={esJefe} open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/70 bg-background/90 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">

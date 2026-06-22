@@ -4,6 +4,7 @@ import { Pool } from 'pg';
 import { PostgresUsuarioRepository } from '../modules/usuario/infrastructure/postgres-usuario.repository';
 import { ListarUsuariosUseCase } from '../modules/usuario/application/use-cases/listar-usuarios.use-case';
 import { AsignarRolUseCase } from '../modules/usuario/application/use-cases/asignar-rol.use-case';
+import { AsignarAreaUseCase } from '../modules/usuario/application/use-cases/asignar-area.use-case';
 import { CrearUsuarioUseCase } from '../modules/usuario/application/use-cases/crear-usuario.use-case';
 import { AutenticarUsuarioUseCase } from '../modules/usuario/application/use-cases/autenticar-usuario.use-case';
 import { UsuarioController } from '../modules/usuario/interfaces/http/usuario.controller';
@@ -64,6 +65,7 @@ export function buildContainer(pool: Pool) {
     new ListarUsuariosUseCase(usuarioRepository),
     new AsignarRolUseCase(usuarioRepository),
     new CrearUsuarioUseCase(usuarioRepository),
+    new AsignarAreaUseCase(usuarioRepository),
   );
   const authController = new AuthController(new AutenticarUsuarioUseCase(usuarioRepository));
 
