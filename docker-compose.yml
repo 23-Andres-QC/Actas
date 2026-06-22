@@ -8,8 +8,6 @@ services:
       POSTGRES_DB: actas
     volumes:
       - actas_db_data:/var/lib/postgresql/data
-    ports:
-      - "5433:5432" # 5432 ya está ocupado por un Postgres nativo de Windows en esta máquina
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U actas -d actas"]
       interval: 5s
@@ -57,12 +55,16 @@ services:
       - actas_internal
 
   web:
-    build: ./actas_fronted
+    build:
+      context: ./actas_fronted
+      args:
+        VITE_API_URL: ${PUBLIC_BACKEND_URL:-http://157.137.189.178:4000/api/v1}
+        VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY:-}
     restart: unless-stopped
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "3001:80"
     networks:
       - actas_internal
 

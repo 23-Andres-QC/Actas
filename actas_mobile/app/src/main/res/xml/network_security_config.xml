@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Permite HTTP sin cifrar solo hacia el backend local de desarrollo
-  (10.0.2.2 = host de la máquina visto desde el emulador de Android).
+  Permite HTTP hacia los servicios de desarrollo y el VPS mientras no haya dominio TLS.
   Todo el resto del tráfico (Supabase, Storage) sigue exigiendo HTTPS.
 -->
 <network-security-config>
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="false">10.0.2.2</domain>
         <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">157.137.189.178</domain>
     </domain-config>
 </network-security-config>

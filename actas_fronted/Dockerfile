@@ -3,6 +3,10 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install
 COPY . .
+ARG VITE_API_URL
+ARG VITE_GEMINI_API_KEY
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_GEMINI_API_KEY=$VITE_GEMINI_API_KEY
 RUN npm run build
 
 FROM nginx:1.27-alpine AS runtime
