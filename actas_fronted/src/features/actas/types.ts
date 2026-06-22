@@ -22,6 +22,12 @@ export interface Acta {
   porcentajeAvance: number;
 }
 
+export interface ConsejoAcuerdo {
+  acuerdoId: string;
+  consejo: string;
+  acciones: string[];
+}
+
 export interface CrearActaInput {
   areaId: string;
   titulo: string;

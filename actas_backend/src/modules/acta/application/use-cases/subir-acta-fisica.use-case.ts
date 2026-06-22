@@ -3,6 +3,7 @@ import { StoragePort } from '../../../evidencia/domain/storage.port';
 import { ACTAS_BUCKET } from '../../../../infrastructure/supabase/client';
 import { extraerPathDesdeUrlFirmada } from '../../../../infrastructure/supabase/extraer-path';
 import { NotFoundError, ValidationError } from '../../../../shared/errors/domain-error';
+import { extraerTextoPdf } from '../../../../shared/utils/extraer-texto-pdf';
 
 const TIPOS_PERMITIDOS = ['application/pdf', 'image/png', 'image/jpeg'];
 const TAMANO_MAXIMO_BYTES = 15 * 1024 * 1024; // 15 MB
@@ -41,6 +42,16 @@ export class SubirActaFisicaUseCase {
 
     if (pathAnterior) {
       await this.storage.eliminarArchivo(ACTAS_BUCKET, pathAnterior);
+    }
+
+    if (archivo.mimeType === 'application/pdf') {
+      extraerTextoPdf(archivo.buffer)
+        .then((texto) => {
+          console.log(`\n--- Texto extraído del PDF (acta ${actaId}) ---\n${texto}\n--- Fin del texto ---\n`);
+        })
+        .catch((err) => {
+          console.error(`Error extrayendo texto del PDF (acta ${actaId}):`, err);
+        });
     }
 
     return { urlActaFisica: url };

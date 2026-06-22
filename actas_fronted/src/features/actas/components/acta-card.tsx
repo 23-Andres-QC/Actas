@@ -6,6 +6,7 @@ import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
+import { extraerTextoPdf } from '../utils/extraer-texto-pdf';
 import { QrActaModal } from './qr-acta-modal';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 
@@ -104,7 +105,17 @@ export function ActaCard({ acta }: { acta: Acta }) {
           {acta.urlActaFisica && (
             <a
               href={acta.urlActaFisica}
-              onClick={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (acta.urlActaFisica?.endsWith('.pdf') || acta.urlActaFisica?.includes('pdf')) {
+                  extraerTextoPdf(acta.urlActaFisica).then((texto) => {
+                    console.log(`%c📄 Texto del PDF — ${acta.titulo}`, 'font-weight:bold;color:#16a34a;font-size:13px');
+                    console.log(texto);
+                  }).catch((err) => {
+                    console.error('Error extrayendo texto del PDF:', err);
+                  });
+                }
+              }}
               target="_blank"
               rel="noreferrer"
               title="Ver acta física"
