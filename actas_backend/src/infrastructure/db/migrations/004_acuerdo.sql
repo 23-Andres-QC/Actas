@@ -7,6 +7,7 @@ create table if not exists acuerdo (
   fecha_fin date not null,
   estado_semaforo text not null default 'verde' check (estado_semaforo in ('verde', 'amarillo', 'rojo')),
   porcentaje_avance numeric(5,2) not null default 0,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
 

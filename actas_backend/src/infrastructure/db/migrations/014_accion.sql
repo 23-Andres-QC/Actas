@@ -4,6 +4,7 @@ create table if not exists accion (
   descripcion text not null,
   fecha_fin date not null,
   completada boolean not null default false,
+  sort_order integer not null default 0,
   created_at timestamptz not null default now()
 );
 
