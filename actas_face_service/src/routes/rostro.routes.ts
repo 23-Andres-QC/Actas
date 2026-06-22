@@ -2,11 +2,11 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { RostroController } from './rostro.controller';
 import { authMiddleware } from '../infrastructure/auth.middleware';
-import { TfjsFaceEmbedder } from '../infrastructure/tfjs-face-embedder';
+import { FaceApiEmbedder } from '../infrastructure/face-api-embedder';
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
 
-export function rostroRoutes(controller: RostroController, embedder: TfjsFaceEmbedder): Router {
+export function rostroRoutes(controller: RostroController, embedder: FaceApiEmbedder): Router {
   const router = Router();
   router.use(authMiddleware);
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { FaceEmbedderPort } from '../domain/face-embedder.port';
+import { FaceEmbedderPort, RostroNoDetectadoError } from '../domain/face-embedder.port';
 import { PostgresRostroRepository } from '../infrastructure/postgres-rostro.repository';
 import { similitudCoseno } from '../domain/similitud';
 
@@ -21,7 +21,8 @@ export class RostroController {
       return;
     }
 
-    const embedding = await this.embedder.extraerEmbedding(req.file.buffer);
+    const embedding = await this.extraerEmbedding(req.file.buffer, res);
+    if (!embedding) return;
     await this.rostroRepository.guardarEmbedding(req.user.id, embedding);
     res.status(201).json({ enrolado: true });
   };
@@ -42,7 +43,8 @@ export class RostroController {
       return;
     }
 
-    const embeddingActual = await this.embedder.extraerEmbedding(req.file.buffer);
+    const embeddingActual = await this.extraerEmbedding(req.file.buffer, res);
+    if (!embeddingActual) return;
     const similitud = similitudCoseno(referencia, embeddingActual);
     res.json({ coincide: similitud >= UMBRAL_SIMILITUD, similitud });
   };
@@ -55,4 +57,18 @@ export class RostroController {
     const referencia = await this.rostroRepository.obtenerEmbedding(req.user.id);
     res.json({ enrolado: referencia !== null });
   };
+
+  private async extraerEmbedding(imagenBuffer: Buffer, res: Response): Promise<number[] | null> {
+    try {
+      return await this.embedder.extraerEmbedding(imagenBuffer);
+    } catch (error) {
+      if (error instanceof RostroNoDetectadoError) {
+        res.status(422).json({
+          error: { code: 'FACE_NOT_DETECTED', message: error.message },
+        });
+        return null;
+      }
+      throw error;
+    }
+  }
 }

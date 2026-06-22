@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import pinoHttp from 'pino-http';
 import pino from 'pino';
 import { pool } from './infrastructure/pool';
-import { TfjsFaceEmbedder } from './infrastructure/tfjs-face-embedder';
+import { FaceApiEmbedder } from './infrastructure/face-api-embedder';
 import { PostgresRostroRepository } from './infrastructure/postgres-rostro.repository';
 import { RostroController } from './routes/rostro.controller';
 import { rostroRoutes } from './routes/rostro.routes';
@@ -14,7 +14,7 @@ const logger = pino();
 const PORT = Number(process.env.PORT ?? 4100);
 
 async function main(): Promise<void> {
-  const embedder = new TfjsFaceEmbedder();
+  const embedder = new FaceApiEmbedder();
   try {
     await embedder.cargar();
     logger.info('Modelo de reconocimiento facial cargado');
