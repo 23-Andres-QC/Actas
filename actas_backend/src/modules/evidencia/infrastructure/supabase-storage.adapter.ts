@@ -14,6 +14,22 @@ export class SupabaseStorageAdapter implements StoragePort {
       throw new Error(`Error subiendo archivo a Supabase Storage: ${error.message}`);
     }
 
+    return this.obtenerUrlFirmada(bucket, path);
+  }
+
+  public async reemplazarArchivo(bucket: string, path: string, contenido: Buffer, mimeType: string): Promise<string> {
+    const { error } = await supabaseAdmin.storage.from(bucket).upload(path, contenido, {
+      contentType: mimeType,
+      upsert: true,
+    });
+    if (error) {
+      throw new Error(`Error reemplazando archivo en Supabase Storage: ${error.message}`);
+    }
+
+    return this.obtenerUrlFirmada(bucket, path);
+  }
+
+  public async obtenerUrlFirmada(bucket: string, path: string): Promise<string> {
     const { data, error: signError } = await supabaseAdmin.storage
       .from(bucket)
       .createSignedUrl(path, EXPIRACION_URL_FIRMADA_SEGUNDOS);

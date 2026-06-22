@@ -1,6 +1,6 @@
 import {
   Document, Packer, Paragraph, Table, TableRow, TableCell,
-  WidthType, AlignmentType, TextRun, BorderStyle, VerticalAlign,
+  WidthType, AlignmentType, TextRun, BorderStyle, VerticalAlign, ImageRun,
 } from 'docx';
 import { ActaResponseDTO } from '../application/dto/acta.dto';
 import { AcuerdoResponseDTO } from '../../acuerdo/application/dto/acuerdo.dto';
@@ -71,6 +71,25 @@ function spacer(): Paragraph {
 
 function check(isSelected: boolean): string {
   return isSelected ? '[X]' : '[  ]';
+}
+
+interface ImagenFirma {
+  data: Buffer;
+  tipo: 'png' | 'jpg';
+}
+
+/** Descarga la firma desde su URL firmada de Supabase para embeberla como imagen real en el Word. */
+async function descargarFirma(url: string): Promise<ImagenFirma | null> {
+  try {
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) return null;
+    const contentType = respuesta.headers.get('content-type') ?? '';
+    const tipo: ImagenFirma['tipo'] = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : 'png';
+    const data = Buffer.from(await respuesta.arrayBuffer());
+    return { data, tipo };
+  } catch {
+    return null;
+  }
 }
 
 export async function buildActaWordBuffer(
@@ -179,6 +198,8 @@ export async function buildActaWordBuffer(
   const acuerdosTable = tableWidth(acuerdosRows);
 
   // ── Asistentes table ────────────────────────────────────────────────────────
+  const firmas = await Promise.all(asistentes.map((a) => (a.firmaUrl ? descargarFirma(a.firmaUrl) : null)));
+
   const asistentesRows: TableRow[] = [
     new TableRow({
       children: [headerCell('Asistentes', 3)],
@@ -190,15 +211,21 @@ export async function buildActaWordBuffer(
         headerCell('Firma física o digital', undefined, 30),
       ],
     }),
-    ...asistentes.map((a) =>
-      new TableRow({
-        children: [
-          dataCell(a.nombre, 40),
-          dataCell(a.cargo ?? '', 30),
-          dataCell(a.firmaUrl ? 'Digital ✓' : '', 30),
-        ],
-      }),
-    ),
+    ...asistentes.map((a, i) => {
+      const firma = firmas[i];
+      const firmaCell = firma
+        ? cell(
+            [new Paragraph({
+              children: [new ImageRun({ type: firma.tipo, data: firma.data, transformation: { width: 100, height: 50 } })],
+              alignment: AlignmentType.CENTER,
+            })],
+            { width: 30 },
+          )
+        : dataCell(a.firmaUrl ? 'Digital ✓' : '', 30);
+      return new TableRow({
+        children: [dataCell(a.nombre, 40), dataCell(a.cargo ?? '', 30), firmaCell],
+      });
+    }),
   ];
 
   if (!asistentes.length) {

@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useRef, useState } from 'react';
-import { ArrowLeft, BrainCircuit, CalendarDays, CheckSquare, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
+import { ArrowLeft, BrainCircuit, CalendarDays, CheckSquare, Clock, Download, Eye, FileCheck2, FileText, Link2, Loader2, MapPin, PenLine, PlusCircle, QrCode, Signature, Upload, UserX } from 'lucide-react';
 import { useActa, useConsejos } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 import { CrearAcuerdoModal } from '../../acuerdos/components/crear-acuerdo-modal';
@@ -84,6 +84,11 @@ export function ActaDetallePage() {
           <Button variant="outline" size="lg" onClick={() => setMostrarQr(true)} title="Ver QR de asistencia">
             <QrCode />
           </Button>
+          <Link to={`/app/actas/${acta.id}/editar`}>
+            <Button variant="outline" size="lg" title="Editar acta en tiempo real">
+              <PenLine /> Editar acta
+            </Button>
+          </Link>
           <Button variant="outline" size="lg" onClick={() => setMostrarFormAcuerdo(true)} className="gap-2">
             <PlusCircle /> Agregar acuerdo
           </Button>

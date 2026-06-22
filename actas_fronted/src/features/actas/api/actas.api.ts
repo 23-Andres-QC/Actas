@@ -7,6 +7,8 @@ export const actasApi = {
   crear: (input: CrearActaInput) => httpClient.post<Acta>('/actas', input),
   recalcularAvance: (id: string) => httpClient.get<{ porcentajeAvance: number }>(`/actas/${id}/avance`),
   descargarWord: (id: string) => httpClient.getBlob(`/actas/${id}/word`),
+  obtenerDocumentoEditable: (id: string) =>
+    httpClient.get<{ documentServerUrl: string; config: Record<string, unknown> }>(`/actas/${id}/documento-editable`),
   subirActaFisica: (id: string, archivo: File) => {
     const formData = new FormData();
     formData.append('archivo', archivo);

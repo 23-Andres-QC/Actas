@@ -22,6 +22,9 @@ import { ListarActasUseCase } from '../modules/acta/application/use-cases/listar
 import { ObtenerActaUseCase } from '../modules/acta/application/use-cases/obtener-acta.use-case';
 import { CalcularAvanceUseCase } from '../modules/acta/application/use-cases/calcular-avance.use-case';
 import { SubirActaFisicaUseCase } from '../modules/acta/application/use-cases/subir-acta-fisica.use-case';
+import { PostgresActaDocumentoRepository } from '../modules/acta/infrastructure/postgres-acta-documento.repository';
+import { ObtenerDocumentoEditableUseCase } from '../modules/acta/application/use-cases/obtener-documento-editable.use-case';
+import { GuardarDocumentoEditableUseCase } from '../modules/acta/application/use-cases/guardar-documento-editable.use-case';
 import { ActaController } from '../modules/acta/interfaces/http/acta.controller';
 
 // Acuerdo
@@ -99,14 +102,26 @@ export function buildContainer(pool: Pool) {
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
   const acuerdoRepository = new PostgresAcuerdoRepository(pool);
   const asistentesFirmadosProviderForActa = new PostgresAsistentesFirmadosProvider(pool);
+  const obtenerActaUseCase = new ObtenerActaUseCase(actaRepository, usuarioRepository);
+  const listarAcuerdosPorActaParaActa = new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository);
+  const listarAsistentesFirmadosParaActa = new ListarAsistentesFirmadosUseCase(asistentesFirmadosProviderForActa);
+  const actaDocumentoRepository = new PostgresActaDocumentoRepository(pool);
   const actaController = new ActaController(
     new CrearActaUseCase(actaRepository, usuarioRepository),
     new ListarActasUseCase(actaRepository, usuarioRepository),
-    new ObtenerActaUseCase(actaRepository, usuarioRepository),
+    obtenerActaUseCase,
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
-    new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository),
+    listarAcuerdosPorActaParaActa,
     new SubirActaFisicaUseCase(actaRepository, storage),
-    new ListarAsistentesFirmadosUseCase(asistentesFirmadosProviderForActa),
+    listarAsistentesFirmadosParaActa,
+    new ObtenerDocumentoEditableUseCase(
+      actaDocumentoRepository,
+      obtenerActaUseCase,
+      listarAcuerdosPorActaParaActa,
+      listarAsistentesFirmadosParaActa,
+      storage,
+    ),
+    new GuardarDocumentoEditableUseCase(actaDocumentoRepository, storage),
   );
 
   const acuerdoController = new AcuerdoController(

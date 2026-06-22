@@ -5,6 +5,7 @@ import { LandingPage } from '../features/landing/landing-page';
 import { LoginPage } from '../features/auth/login-page';
 import { ActasDashboardPage } from '../features/actas/pages/actas-dashboard-page';
 import { ActaDetallePage } from '../features/actas/pages/acta-detalle-page';
+import { EditarActaPage } from '../features/actas/pages/editar-acta-page';
 import { CrearActaPage } from '../features/actas/pages/crear-acta-page';
 import { UsuariosPage } from '../features/usuarios/pages/usuarios-page';
 import { AreasPage } from '../features/areas/pages/areas-page';
@@ -22,6 +23,7 @@ export const router = createBrowserRouter([
           { index: true, element: <ActasDashboardPage /> },
           { path: 'actas/nueva', element: <CrearActaPage /> },
           { path: 'actas/:id', element: <ActaDetallePage /> },
+          { path: 'actas/:id/editar', element: <EditarActaPage /> },
           {
             element: <ProtectedRoute roles={['superadmin', 'admin']} />,
             children: [{ path: 'usuarios', element: <UsuariosPage /> }],
