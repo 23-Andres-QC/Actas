@@ -1,12 +1,21 @@
-import '@tensorflow/tfjs-node';
+// face-api.js 0.22.x usa la API de TensorFlow.js 1.7. El paquete puro evita
+// los binarios nativos obsoletos de tfjs-node y registra el backend CPU.
+import '@tensorflow/tfjs';
 import { join } from 'path';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const faceapi = require('face-api.js');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { Canvas, Image, ImageData, loadImage } = require('canvas');
+const { Canvas, Image, ImageData, loadImage } = require('@napi-rs/canvas');
 import { FaceEmbedderPort, RostroNoDetectadoError } from '../domain/face-embedder.port';
 
-faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
+// face-api.js crea internamente `new Canvas()`; napi-rs exige ancho y alto.
+class FaceApiCanvas extends Canvas {
+  constructor(width = 1, height = 1) {
+    super(width, height);
+  }
+}
+
+faceapi.env.monkeyPatch({ Canvas: FaceApiCanvas, Image, ImageData });
 
 const MODEL_DIR = join(__dirname, '..', '..', 'assets', 'models');
 

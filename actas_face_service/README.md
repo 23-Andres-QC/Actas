@@ -1,28 +1,41 @@
 # actas_face_service
 
-Microservicio independiente de `actas_backend`, encargado únicamente del reconocimiento facial usado para firmar actas desde el móvil (reemplaza el `BiometricPrompt` nativo). Comparte la misma base de datos Postgres y el mismo `JWT_SECRET` que `actas_backend` — no tiene login propio, valida el token que ya emitió el backend principal.
+Microservicio de reconocimiento facial para la firma de actas desde la aplicación móvil. Comparte PostgreSQL y `JWT_SECRET` con `actas_backend`.
 
-## Falta el modelo (bloqueante)
+## Reconocimiento facial
 
-Este servicio necesita un modelo de embeddings faciales en **formato TensorFlow.js** (`model.json` + archivos `.bin`) colocado en `assets/face_embedder/`. No viene incluido en el repo.
+El servicio usa `face-api.js` con el pipeline detector → landmarks → descriptor facial de 128 dimensiones. Los modelos requeridos están en `assets/models/`:
 
-Cómo conseguirlo:
-1. Descarga un modelo de embeddings faciales ya convertido a TF.js (ej. MobileFaceNet, FaceNet), o
-2. Si solo tienes un `.tflite`, convviértelo una vez con `tensorflowjs_converter` (paquete `tensorflowjs` de Python) a formato TF.js Graph model.
-3. Copia `model.json` y los `.bin` resultantes a `actas_face_service/assets/face_embedder/`.
+- `tiny_face_detector`
+- `face_landmark_68`
+- `face_recognition_model`
 
-Sin el modelo, el servicio levanta igual (`/health`, `/ready` funcionan) pero `/enrolar` y `/verificar` responden `503` hasta que el archivo esté presente.
+TensorFlow.js 1.7 se ejecuta con el backend CPU en JavaScript y `@napi-rs/canvas`, evitando dependencias nativas antiguas incompatibles con Node 20.
+
+Si los modelos no cargan, `/enrolar` y `/verificar` responden `503`. Si no se detecta un rostro, responden `422` con el código `FACE_NOT_DETECTED`.
 
 ## Endpoints
 
-- `POST /enrolar` (multipart, campo `rostro`) — guarda el embedding de referencia del usuario autenticado.
-- `POST /verificar` (multipart, campo `rostro`) — compara contra el embedding guardado, responde `{ coincide, similitud }`.
-- `GET /estado` — `{ enrolado: boolean }`.
+- `POST /enrolar` (multipart, campo `rostro`): guarda el descriptor de referencia.
+- `POST /verificar` (multipart, campo `rostro`): compara contra el descriptor guardado.
+- `GET /estado`: responde `{ enrolado: boolean }`.
+- `GET /health`: comprueba el proceso HTTP.
+- `GET /ready`: comprueba PostgreSQL y la carga de modelos.
 
 ## Desarrollo local
 
 ```bash
 npm install
-cp .env.example .env   # ajusta DATABASE_URL/JWT_SECRET para que coincidan con actas_backend
+npm run build
+npm run lint
 npm run dev
+```
+
+## Docker
+
+Desde la raíz del repositorio:
+
+```bash
+docker compose build face-service
+docker compose up -d face-service
 ```
