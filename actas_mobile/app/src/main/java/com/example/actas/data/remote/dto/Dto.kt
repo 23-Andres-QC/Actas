@@ -32,6 +32,18 @@ data class AcuerdoDto(
     val actaTitulo: String,
 )
 
+// --- Backend: actas visibles para el área del usuario ---
+
+data class ActaDto(
+    val id: String,
+    val titulo: String,
+    val fecha: String,
+    val lugar: String,
+    val urlReunion: String?,
+    val urlActaFisica: String?,
+    val firmado: Boolean,
+)
+
 // --- Backend: asistencia ---
 
 data class AsistenciaResponse(val ok: Boolean, val firmaUrl: String?)

@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronRight, Eye, FileCheck2, MapPin, QrCode, Upload } from 'lucide-react';
+import { CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Clock3, Eye, FileCheck2, MapPin, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
 import { Acta } from '../types';
 import { QrActaModal } from './qr-acta-modal';
+import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
 
 const PROCESO_LABEL: Record<Acta['proceso'], string> = {
   estrategico: 'Estratégico',
@@ -21,9 +22,25 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subirActaFisica = useSubirActaFisica();
   const [mostrarQr, setMostrarQr] = useState(false);
+  const [expandida, setExpandida] = useState(false);
+  const { data: acuerdos, isLoading: cargandoAcuerdos, isError: errorAcuerdos } = useAcuerdosPorActa(expandida ? acta.id : '');
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-card px-5 py-4 shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
+    <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
+      <div
+        className="flex cursor-pointer items-center gap-4 px-5 py-4"
+        onClick={() => setExpandida((valor) => !valor)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setExpandida((valor) => !valor);
+          }
+        }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={expandida}
+        aria-controls={`acuerdos-${acta.id}`}
+      >
       {/* Badges */}
       <div className="hidden shrink-0 flex-col gap-1.5 sm:flex">
         <Badge variant={completed ? 'success' : 'secondary'} className="justify-center">
@@ -61,6 +78,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
       {/* Acción */}
       <Link
         to={`/app/actas/${acta.id}`}
+        onClick={(event) => event.stopPropagation()}
         className="ml-2 flex shrink-0 items-center gap-1.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <Eye className="size-3.5" />
@@ -71,12 +89,14 @@ export function ActaCard({ acta }: { acta: Acta }) {
       <button
         type="button"
         title="Ver QR de asistencia"
-        onClick={() => setMostrarQr(true)}
+        onClick={(event) => {
+          event.stopPropagation();
+          setMostrarQr(true);
+        }}
         className="flex shrink-0 items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary"
       >
         <QrCode className="size-3.5" />
       </button>
-      {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
 
       {/* Acta física */}
       {(acta.urlActaFisica || puedeSubirActaFisica) && (
@@ -84,6 +104,7 @@ export function ActaCard({ acta }: { acta: Acta }) {
           {acta.urlActaFisica && (
             <a
               href={acta.urlActaFisica}
+              onClick={(event) => event.stopPropagation()}
               target="_blank"
               rel="noreferrer"
               title="Ver acta física"
@@ -109,7 +130,10 @@ export function ActaCard({ acta }: { acta: Acta }) {
                 type="button"
                 title={acta.urlActaFisica ? 'Actualizar acta física' : 'Subir acta física'}
                 disabled={subirActaFisica.isPending}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
                 className="flex items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary disabled:pointer-events-none disabled:opacity-50"
               >
                 <Upload className="size-3.5" />
@@ -118,6 +142,65 @@ export function ActaCard({ acta }: { acta: Acta }) {
           )}
         </div>
       )}
+        <button
+          type="button"
+          title={expandida ? 'Ocultar acuerdos' : 'Mostrar acuerdos'}
+          onClick={(event) => {
+            event.stopPropagation();
+            setExpandida((valor) => !valor);
+          }}
+          className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+        >
+          <ChevronDown className={`size-4 transition-transform ${expandida ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      {expandida && (
+        <div id={`acuerdos-${acta.id}`} className="border-t bg-muted/15 px-5 py-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Acuerdos y compromisos</p>
+              <p className="text-xs text-muted-foreground">
+                {acuerdos?.length ?? 0} acuerdo{acuerdos?.length === 1 ? '' : 's'} registrado{acuerdos?.length === 1 ? '' : 's'}
+              </p>
+            </div>
+            <Link
+              to={`/app/actas/${acta.id}`}
+              className="text-xs font-semibold text-primary hover:underline"
+            >
+              Gestionar acuerdos
+            </Link>
+          </div>
+
+          {cargandoAcuerdos && <div className="h-16 animate-pulse rounded-lg border bg-card" />}
+          {errorAcuerdos && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">No se pudieron cargar los acuerdos.</p>}
+          {!cargandoAcuerdos && !errorAcuerdos && !acuerdos?.length && (
+            <p className="rounded-lg border border-dashed bg-card/70 p-4 text-center text-sm text-muted-foreground">Esta acta todavía no tiene acuerdos registrados.</p>
+          )}
+          {!!acuerdos?.length && (
+            <div className="space-y-2">
+              {acuerdos.map((acuerdo) => {
+                const cumplido = acuerdo.porcentajeAvance >= 100;
+                return (
+                  <div key={acuerdo.id} className="flex flex-col gap-2 rounded-lg border bg-card px-4 py-3 sm:flex-row sm:items-center">
+                    <span className={`grid size-8 shrink-0 place-items-center rounded-full ${cumplido ? 'bg-success/10 text-success' : 'bg-secondary text-muted-foreground'}`}>
+                      {cumplido ? <CheckCircle2 className="size-4" /> : <Clock3 className="size-4" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground">{acuerdo.descripcion}</p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {acuerdo.responsableNombre ?? 'Sin responsable'} · vence {new Date(acuerdo.fechaFin).toLocaleDateString('es-PE')}
+                      </p>
+                    </div>
+                    <Badge variant={cumplido ? 'success' : 'secondary'}>{acuerdo.porcentajeAvance}%</Badge>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+      {mostrarQr && <QrActaModal acta={acta} onClose={() => setMostrarQr(false)} />}
     </div>
   );
 }

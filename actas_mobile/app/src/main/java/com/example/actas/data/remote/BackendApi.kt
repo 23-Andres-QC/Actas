@@ -1,6 +1,7 @@
 package com.example.actas.data.remote
 
 import com.example.actas.data.remote.dto.AcuerdoDto
+import com.example.actas.data.remote.dto.ActaDto
 import com.example.actas.data.remote.dto.AsistenciaResponse
 import com.example.actas.data.remote.dto.BackendLoginRequest
 import com.example.actas.data.remote.dto.BackendLoginResponse
@@ -21,13 +22,16 @@ interface BackendApi {
     @GET("acuerdos/mios")
     suspend fun misAcuerdos(): List<AcuerdoDto>
 
+    @GET("actas")
+    suspend fun misActas(): List<ActaDto>
+
     @Multipart
     @POST("actas/{actaId}/asistencia")
     suspend fun registrarAsistencia(
         @Path("actaId") actaId: String,
-        @Part("metodo") metodo: MultipartBody.Part,
+        @Part metodo: MultipartBody.Part,
         @Part firma: MultipartBody.Part?,
-        @Part("qrToken") qrToken: MultipartBody.Part?,
+        @Part qrToken: MultipartBody.Part?,
     ): AsistenciaResponse
 
     @Multipart

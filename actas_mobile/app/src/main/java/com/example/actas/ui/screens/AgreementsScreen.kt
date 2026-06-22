@@ -7,11 +7,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Upload
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.actas.ActasApplication
 import com.example.actas.data.remote.ApiConfig
 import com.example.actas.data.remote.dto.AcuerdoDto
+import com.example.actas.data.remote.dto.ActaDto
 import com.example.actas.data.remote.mensajeDeErrorRed
 import com.example.actas.ui.theme.SemaforoAmarillo
 import com.example.actas.ui.theme.SemaforoAmarilloTexto
@@ -33,7 +38,7 @@ import kotlinx.coroutines.launch
 
 private sealed interface AgreementsUiState {
     data object Loading : AgreementsUiState
-    data class Success(val acuerdos: List<AcuerdoDto>) : AgreementsUiState
+    data class Success(val actas: List<ActaDto>, val acuerdos: List<AcuerdoDto>) : AgreementsUiState
     data class Error(val message: String) : AgreementsUiState
 }
 
@@ -50,12 +55,16 @@ fun AgreementsScreen(
     val scope = rememberCoroutineScope()
 
     var state by remember { mutableStateOf<AgreementsUiState>(AgreementsUiState.Loading) }
+    var mostrandoActas by remember { mutableStateOf(true) }
 
     fun cargar() {
         state = AgreementsUiState.Loading
         scope.launch {
             state = try {
-                AgreementsUiState.Success(app.backendApi.misAcuerdos())
+                AgreementsUiState.Success(
+                    actas = app.backendApi.misActas(),
+                    acuerdos = app.backendApi.misAcuerdos(),
+                )
             } catch (e: Exception) {
                 Log.e("AgreementsScreen", "Error al cargar mis acuerdos desde ${ApiConfig.BACKEND_URL}", e)
                 AgreementsUiState.Error(mensajeDeErrorRed(e))
@@ -70,7 +79,7 @@ fun AgreementsScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("Mis acuerdos", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        Text("Mi área", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         app.sessionManager.email()?.let {
                             Text(it, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
@@ -105,22 +114,101 @@ fun AgreementsScreen(
                 }
             }
             is AgreementsUiState.Success -> {
-                if (s.acuerdos.isEmpty()) {
-                    Box(Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
-                        Text("No tienes acuerdos asignados todavía.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                } else {
-                    LazyColumn(
-                        contentPadding = paddingValues,
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(s.acuerdos) { acuerdo ->
-                            AcuerdoCard(acuerdo = acuerdo, onUploadEvidence = { onUploadEvidence(acuerdo.id) })
+                        FilterChip(
+                            selected = mostrandoActas,
+                            onClick = { mostrandoActas = true },
+                            label = { Text("Actas (${s.actas.size})") },
+                            leadingIcon = { Icon(Icons.AutoMirrored.Filled.EventNote, contentDescription = null) },
+                        )
+                        FilterChip(
+                            selected = !mostrandoActas,
+                            onClick = { mostrandoActas = false },
+                            label = { Text("Acuerdos (${s.acuerdos.size})") },
+                        )
+                    }
+
+                    val elementosVacios = if (mostrandoActas) s.actas.isEmpty() else s.acuerdos.isEmpty()
+                    if (elementosVacios) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                if (mostrandoActas) "No hay actas disponibles para tu área." else "No tienes acuerdos asignados todavía.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
-                        item { Spacer(Modifier.height(72.dp)) }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                        ) {
+                            if (mostrandoActas) {
+                                items(s.actas, key = { it.id }) { acta -> ActaCard(acta) }
+                            } else {
+                                items(s.acuerdos, key = { it.id }) { acuerdo ->
+                                    AcuerdoCard(acuerdo = acuerdo, onUploadEvidence = { onUploadEvidence(acuerdo.id) })
+                                }
+                            }
+                        }
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActaCard(acta: ActaDto) {
+    val uriHandler = LocalUriHandler.current
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(16.dp),
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
+                Box(
+                    modifier = Modifier.size(42.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.EventNote, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                }
+                Spacer(Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(acta.titulo, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "${acta.fecha.take(10)} · ${acta.lugar}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Icon(
+                    Icons.Default.CheckCircle,
+                    contentDescription = if (acta.firmado) "Acta firmada" else "Firma pendiente",
+                    tint = if (acta.firmado) SemaforoVerde else MaterialTheme.colorScheme.outlineVariant,
+                )
+            }
+
+            Spacer(Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (acta.urlReunion != null) {
+                    OutlinedButton(onClick = { uriHandler.openUri(acta.urlReunion) }) {
+                        Icon(Icons.Default.Videocam, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text("Ver acta virtual")
+                    }
+                }
+                Text(
+                    if (acta.firmado) "Firmada" else "Pendiente de firma",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (acta.firmado) SemaforoVerde else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

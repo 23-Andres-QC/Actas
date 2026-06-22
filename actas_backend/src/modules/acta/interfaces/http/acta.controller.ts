@@ -41,7 +41,13 @@ export class ActaController {
       ejecutadoPorId: req.user.id,
       ejecutadoPorRol: req.user.rol,
     });
-    res.json(actas);
+    const actasConFirma = await Promise.all(
+      actas.map(async (acta) => {
+        const asistentes = await this.listarAsistentesFirmados.execute(acta.id);
+        return { ...acta, firmado: asistentes.some((asistente) => asistente.usuarioId === req.user!.id) };
+      }),
+    );
+    res.json(actasConFirma);
   };
 
   public detalle = async (req: Request, res: Response): Promise<void> => {

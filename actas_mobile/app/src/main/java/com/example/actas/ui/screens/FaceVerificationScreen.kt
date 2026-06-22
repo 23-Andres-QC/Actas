@@ -36,13 +36,14 @@ import com.example.actas.ActasApplication
 import com.example.actas.data.remote.mensajeDeErrorRed
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 
-private const val FRAMES_REQUERIDOS = 15
+private const val FRAMES_REQUERIDOS = 5
 
 /**
  * Reemplaza al BiometricPrompt nativo: verifica identidad comparando un embedding facial
@@ -69,6 +70,7 @@ fun FaceVerificationScreen(
         mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
     }
     var framesConRostro by remember { mutableIntStateOf(0) }
+    var rostroListo by remember { mutableStateOf(false) }
     var mensaje by remember { mutableStateOf("Ubica tu rostro dentro del óvalo") }
     var procesando by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -99,6 +101,7 @@ fun FaceVerificationScreen(
             } catch (e: Exception) {
                 procesando = false
                 framesConRostro = 0
+                rostroListo = false
                 error = mensajeDeErrorRed(e)
             }
         }
@@ -112,6 +115,7 @@ fun FaceVerificationScreen(
                 if (!resultado.coincide) {
                     procesando = false
                     framesConRostro = 0
+                    rostroListo = false
                     error = "No pudimos confirmar que eres tú. Intenta de nuevo con mejor luz."
                     return@launch
                 }
@@ -124,6 +128,7 @@ fun FaceVerificationScreen(
             } catch (e: HttpException) {
                 procesando = false
                 framesConRostro = 0
+                rostroListo = false
                 if (e.code() == 404) {
                     sinEnrolar = true
                 } else {
@@ -132,14 +137,16 @@ fun FaceVerificationScreen(
             } catch (e: Exception) {
                 procesando = false
                 framesConRostro = 0
+                rostroListo = false
                 error = mensajeDeErrorRed(e)
             }
         }
     }
 
     fun capturar() {
-        if (procesando) return
+        if (procesando || !rostroListo) return
         procesando = true
+        error = null
         mensaje = "Verificando..."
         cameraController.takePicture(
             ContextCompat.getMainExecutor(context),
@@ -155,10 +162,18 @@ fun FaceVerificationScreen(
                 override fun onError(exception: ImageCaptureException) {
                     procesando = false
                     framesConRostro = 0
+                    rostroListo = false
                     error = "No se pudo capturar la foto: ${exception.message}"
                 }
             },
         )
+    }
+
+    LaunchedEffect(rostroListo, procesando) {
+        if (rostroListo && !procesando) {
+            delay(350)
+            if (rostroListo && !procesando) capturar()
+        }
     }
 
     val progreso = (framesConRostro.toFloat() / FRAMES_REQUERIDOS).coerceIn(0f, 1f)
@@ -205,27 +220,47 @@ fun FaceVerificationScreen(
                         .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
                         .build()
                     val faceDetector = FaceDetection.getClient(options)
+                    previewView.controller = cameraController
 
                     cameraController.setImageAnalysisAnalyzer(
                         ContextCompat.getMainExecutor(ctx),
                         MlKitAnalyzer(
                             listOf(faceDetector),
-                            androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
+                            androidx.camera.core.ImageAnalysis.COORDINATE_SYSTEM_VIEW_REFERENCED,
                             ContextCompat.getMainExecutor(ctx),
                         ) { result ->
                             if (procesando) return@MlKitAnalyzer
                             val rostro = result?.getValue(faceDetector)?.firstOrNull()
+                            val anchoVista = previewView.width.toFloat()
+                            val altoVista = previewView.height.toFloat()
+                            val caja = rostro?.boundingBox
+                            val rostroCentrado = caja != null && anchoVista > 0f && altoVista > 0f &&
+                                kotlin.math.abs(caja.centerX() - anchoVista / 2f) < anchoVista * 0.2f &&
+                                kotlin.math.abs(caja.centerY() - altoVista * 0.45f) < altoVista * 0.22f
                             val ojosAbiertos = rostro != null &&
                                 (rostro.leftEyeOpenProbability ?: 0f) > 0.4f &&
                                 (rostro.rightEyeOpenProbability ?: 0f) > 0.4f
 
                             when {
-                                rostro == null -> { framesConRostro = 0; mensaje = "Ubica tu rostro dentro del óvalo" }
-                                !ojosAbiertos -> { framesConRostro = 0; mensaje = "Mantén los ojos abiertos" }
+                                rostro == null -> {
+                                    framesConRostro = 0
+                                    rostroListo = false
+                                    mensaje = "Ubica tu rostro dentro del óvalo"
+                                }
+                                !rostroCentrado -> {
+                                    framesConRostro = 0
+                                    rostroListo = false
+                                    mensaje = "Centra tu rostro dentro del óvalo"
+                                }
+                                !ojosAbiertos -> {
+                                    framesConRostro = 0
+                                    rostroListo = false
+                                    mensaje = "Mantén los ojos abiertos"
+                                }
                                 else -> {
-                                    framesConRostro++
-                                    mensaje = "Mantén la posición..."
-                                    if (framesConRostro >= FRAMES_REQUERIDOS) capturar()
+                                    framesConRostro = (framesConRostro + 1).coerceAtMost(FRAMES_REQUERIDOS)
+                                    rostroListo = framesConRostro >= FRAMES_REQUERIDOS
+                                    mensaje = if (rostroListo) "Rostro centrado. Validando..." else "Mantén la posición..."
                                 }
                             }
                         },
@@ -234,7 +269,6 @@ fun FaceVerificationScreen(
                     cameraController.cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
                     cameraController.bindToLifecycle(lifecycleOwner)
                     cameraController.setEnabledUseCases(CameraController.IMAGE_ANALYSIS or CameraController.IMAGE_CAPTURE)
-                    previewView.controller = cameraController
                     previewView
                 },
             )
@@ -242,7 +276,7 @@ fun FaceVerificationScreen(
             Box(
                 modifier = Modifier
                     .size(width = 230.dp, height = 290.dp)
-                    .border(width = 4.dp, color = if (procesando) Color(0xFF16A34A) else Color.White, shape = RoundedCornerShape(50)),
+                    .border(width = 4.dp, color = if (rostroListo || procesando) Color(0xFF16A34A) else Color.White, shape = RoundedCornerShape(50)),
             )
 
             Column(
