@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import { ArrowLeft, CalendarDays, Clock, Download, Eye, FileCheck2, FileText, Loader2, MapPin, Upload, UserX } from 'lucide-react';
 import { useActa } from '../hooks/use-actas';
 import { useAcuerdosPorActa } from '../../acuerdos/hooks/use-acuerdos';
+import { AcuerdosPanel } from '../../acuerdos/components/acuerdos-panel';
 import { actasApi } from '../api/actas.api';
 import { useInasistentes, useSubirEvidenciaInasistencia } from '../../asistencia/hooks/use-inasistentes';
 import { Card } from '../../../components/ui/card';
@@ -113,6 +114,8 @@ export function ActaDetallePage() {
           <footer className="mt-12 border-t border-slate-200 pt-4 text-center text-[10px] uppercase tracking-wider text-slate-400">Documento generado por Actas Institucionales</footer>
         </article>
       </div>
+
+      <AcuerdosPanel actaId={acta.id} />
 
       {puedeVerInasistentes && <div className="mt-8"><InasistentesSection actaId={acta.id} puedeSubirEvidencia={esSuperAdmin || esAdmin} /></div>}
     </section>

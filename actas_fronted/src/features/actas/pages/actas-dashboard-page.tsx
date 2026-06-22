@@ -94,7 +94,7 @@ export function ActasDashboardPage() {
         <Card className="border-dashed p-8 text-center text-sm text-muted-foreground">No encontramos actas que coincidan con “{search}”.</Card>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="flex flex-col gap-2">
         {filteredActas.map((acta) => <ActaCard key={acta.id} acta={acta} />)}
       </div>
     </section>

@@ -22,6 +22,18 @@ export function useEvidenciasAcuerdo(acuerdoId: string) {
   return useQuery({ queryKey: ['evidencias', acuerdoId], queryFn: () => acuerdosApi.listarEvidencias(acuerdoId), enabled: Boolean(acuerdoId) });
 }
 
+export function useActualizarAvanceAcuerdo(actaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, porcentajeAvance }: { id: string; porcentajeAvance: number }) =>
+      acuerdosApi.actualizarAvance(id, porcentajeAvance),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['acuerdos', actaId] });
+      queryClient.invalidateQueries({ queryKey: ['actas'] });
+    },
+  });
+}
+
 export function useSubirEvidenciaAcuerdo(acuerdoId: string) {
   const queryClient = useQueryClient();
   return useMutation({
