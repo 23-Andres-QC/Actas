@@ -60,12 +60,12 @@ export function LandingPage() {
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-[1320px] items-center justify-between gap-4 px-5 py-3">
           <a href="#inicio" className="flex items-center gap-2.5">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent font-display text-sm font-extrabold text-primary-foreground shadow-soft">
-              A
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary p-1.5 shadow-soft">
+              <img src="/logo1.png" alt="ComprometIA" className="size-full object-contain" />
             </span>
             <span className="leading-tight">
               <span className="block font-display text-lg font-extrabold">
-                <span className="text-accent">Actas</span> <span className="text-primary">Institucionales</span>
+                <span className="text-accent">Compromet</span><span className="text-primary">IA</span>
               </span>
               <span className="block text-[11px] text-muted-foreground">Gestión inteligente de actas y compromisos</span>
             </span>
@@ -466,14 +466,14 @@ export function LandingPage() {
       <footer className="border-t border-border bg-card">
         <div className="mx-auto flex max-w-[1320px] flex-col items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground sm:flex-row">
           <div className="flex items-center gap-2">
-            <span className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-accent text-[10px] font-extrabold text-primary-foreground">
-              A
+            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-secondary p-1">
+              <img src="/logo1.png" alt="ComprometIA" className="size-full object-contain" />
             </span>
             <span className="font-display font-bold">
-              <span className="text-accent">Actas</span> <span className="text-primary">Institucionales</span>
+              <span className="text-accent">Compromet</span><span className="text-primary">IA</span>
             </span>
           </div>
-          <p>© 2026 Actas Institucionales — Plataforma para instituciones educativas</p>
+          <p>© 2026 ComprometIA — Plataforma para instituciones educativas</p>
         </div>
       </footer>
     </div>

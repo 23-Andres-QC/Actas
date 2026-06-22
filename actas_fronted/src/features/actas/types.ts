@@ -28,6 +28,14 @@ export interface ConsejoAcuerdo {
   acciones: string[];
 }
 
+export interface EvidenciaActa {
+  id: string;
+  actaId: string;
+  urlArchivo: string;
+  tipo: 'archivo' | 'link';
+  fechaSubida: string;
+}
+
 export interface CrearActaInput {
   areaId: string;
   titulo: string;

@@ -42,9 +42,12 @@ export function Layout() {
             >
               <Menu className="size-5" />
             </Button>
-            <div className="min-w-0">
-              <p className="truncate font-display text-sm font-semibold text-primary">Actas Institucionales</p>
-              <p className="hidden text-xs text-muted-foreground sm:block">Gestión y seguimiento institucional</p>
+            <div className="flex min-w-0 items-center gap-2">
+              <img src="/logo2.png" alt="ComprometIA" className="hidden size-7 shrink-0 object-contain sm:block" />
+              <div className="min-w-0">
+                <p className="truncate font-display text-sm font-semibold text-primary">ComprometIA</p>
+                <p className="hidden text-xs text-muted-foreground sm:block">Gestión y seguimiento institucional</p>
+              </div>
             </div>
           </div>
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">

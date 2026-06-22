@@ -39,6 +39,30 @@ export function useSubirActaFisica() {
   });
 }
 
+export function useEvidenciasActa(actaId: string) {
+  return useQuery({
+    queryKey: ['evidencias-acta', actaId],
+    queryFn: () => actasApi.listarEvidencias(actaId),
+    enabled: Boolean(actaId),
+  });
+}
+
+export function useSubirEvidenciaActa(actaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (archivo: File) => actasApi.subirEvidencia(actaId, archivo),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias-acta', actaId] }),
+  });
+}
+
+export function useSubirEvidenciaActaLink(actaId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (url: string) => actasApi.subirEvidenciaLink(actaId, url),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['evidencias-acta', actaId] }),
+  });
+}
+
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
 

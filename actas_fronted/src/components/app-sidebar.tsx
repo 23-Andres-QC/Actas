@@ -50,11 +50,11 @@ export function AppSidebar({ rol, esJefe, open, onClose }: AppSidebarProps) {
         )}
       >
         <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-4">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-sidebar-primary to-cyan-300 font-display font-extrabold text-sidebar-primary-foreground shadow-lg shadow-cyan-950/20">
-            A
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent/40 p-1.5 shadow-lg shadow-cyan-950/20">
+            <img src="/logo1.png" alt="ComprometIA" className="size-full object-contain" />
           </div>
           <div className="min-w-0 flex-1 leading-tight">
-            <p className="font-display text-base font-bold text-sidebar-foreground">Actas</p>
+            <p className="font-display text-base font-bold text-sidebar-foreground">ComprometIA</p>
             <p className="truncate text-xs text-sidebar-foreground/65">Gestión institucional</p>
           </div>
           <button

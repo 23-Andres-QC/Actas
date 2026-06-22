@@ -1,5 +1,5 @@
 import { httpClient } from '../../../shared/api/http-client';
-import { Acta, CrearActaInput } from '../types';
+import { Acta, CrearActaInput, EvidenciaActa } from '../types';
 
 export const actasApi = {
   listar: (areaId?: string) => httpClient.get<Acta[]>(`/actas${areaId ? `?areaId=${areaId}` : ''}`),
@@ -17,4 +17,12 @@ export const actasApi = {
     formData.append('archivo', archivo);
     return httpClient.post<{ urlActaFisica: string }>(`/actas/${id}/acta-fisica`, formData);
   },
+  listarEvidencias: (actaId: string) => httpClient.get<EvidenciaActa[]>(`/actas/${actaId}/evidencias`),
+  subirEvidencia: (actaId: string, archivo: File) => {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    return httpClient.post<{ ok: true }>(`/actas/${actaId}/evidencias`, formData);
+  },
+  subirEvidenciaLink: (actaId: string, url: string) =>
+    httpClient.post<{ ok: true }>(`/actas/${actaId}/evidencias`, { url }),
 };

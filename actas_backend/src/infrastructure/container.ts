@@ -54,6 +54,12 @@ import { SubirEvidenciaAccionUseCase } from '../modules/evidencia-accion/applica
 import { ListarEvidenciasAccionUseCase } from '../modules/evidencia-accion/application/use-cases/listar-evidencias-accion.use-case';
 import { EvidenciaAccionController } from '../modules/evidencia-accion/interfaces/http/evidencia-accion.controller';
 
+// Evidencia de acta
+import { PostgresEvidenciaActaRepository } from '../modules/evidencia-acta/infrastructure/postgres-evidencia-acta.repository';
+import { SubirEvidenciaActaUseCase } from '../modules/evidencia-acta/application/use-cases/subir-evidencia-acta.use-case';
+import { ListarEvidenciasActaUseCase } from '../modules/evidencia-acta/application/use-cases/listar-evidencias-acta.use-case';
+import { EvidenciaActaController } from '../modules/evidencia-acta/interfaces/http/evidencia-acta.controller';
+
 // Asistencia
 import { PostgresAsistenciaRepository } from '../modules/asistencia/infrastructure/postgres-asistencia.repository';
 import { PostgresInasistentesProvider } from '../modules/asistencia/infrastructure/postgres-inasistentes.provider';
@@ -179,6 +185,12 @@ export function buildContainer(pool: Pool) {
     new ListarEvidenciasAccionUseCase(evidenciaAccionRepository),
   );
 
+  const evidenciaActaRepository = new PostgresEvidenciaActaRepository(pool);
+  const evidenciaActaController = new EvidenciaActaController(
+    new SubirEvidenciaActaUseCase(evidenciaActaRepository, storage, actaRepository),
+    new ListarEvidenciasActaUseCase(evidenciaActaRepository),
+  );
+
   return {
     usuarioController,
     firmaUsuarioController,
@@ -190,5 +202,6 @@ export function buildContainer(pool: Pool) {
     evidenciaController,
     accionController,
     evidenciaAccionController,
+    evidenciaActaController,
   };
 }

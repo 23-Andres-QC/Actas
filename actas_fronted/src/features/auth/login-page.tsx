@@ -1,6 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, FileCheck2, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../shared/auth/auth-context';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -38,10 +38,10 @@ export function LoginPage() {
         <div className="pointer-events-none absolute inset-0 opacity-20" style={dotPattern} />
         <div className="pointer-events-none absolute -right-32 top-20 size-96 rounded-full bg-accent/20 blur-3xl" />
         <Link to="/" className="relative flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-sidebar-primary to-cyan-300 font-display font-extrabold text-sidebar-primary-foreground">
-            A
+          <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent/40 p-1.5">
+            <img src="/logo1.png" alt="ComprometIA" className="size-full object-contain" />
           </span>
-          <span className="font-display text-lg font-bold">Actas Institucionales</span>
+          <span className="font-display text-lg font-bold">ComprometIA</span>
         </Link>
 
         <div className="relative max-w-xl">
@@ -73,10 +73,10 @@ export function LoginPage() {
           </Link>
 
           <div className="mb-7 lg:hidden">
-            <div className="mb-5 flex size-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground shadow-soft">
-              <FileCheck2 className="size-5" />
+            <div className="mb-5 flex size-11 items-center justify-center rounded-xl bg-secondary p-1.5 shadow-soft">
+              <img src="/logo1.png" alt="ComprometIA" className="size-full object-contain" />
             </div>
-            <p className="font-display text-xl font-bold text-primary">Actas Institucionales</p>
+            <p className="font-display text-xl font-bold text-primary">ComprometIA</p>
           </div>
 
           <div className="mb-7">
