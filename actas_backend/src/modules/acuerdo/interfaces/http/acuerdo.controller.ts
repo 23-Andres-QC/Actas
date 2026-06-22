@@ -25,8 +25,9 @@ export class AcuerdoController {
   };
 
   public crear = async (req: Request, res: Response): Promise<void> => {
+    if (!req.user) throw new UnauthorizedError();
     const body = crearAcuerdoSchema.parse({ ...req.body, actaId: req.params.actaId });
-    const acuerdo = await this.crearAcuerdo.execute(body);
+    const acuerdo = await this.crearAcuerdo.execute(body, req.user.id, req.user.rol);
     res.status(201).json(acuerdo);
   };
 

@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CalendarDays, ChevronDown, ChevronRight, Eye, FileCheck2, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
+import { CalendarDays, ChevronDown, ChevronRight, Download, Eye, FileCheck2, Loader2, MapPin, PlusCircle, QrCode, Upload } from 'lucide-react';
 import { Badge } from '../../../components/ui/badge';
 import { ProgressBar } from '../../../components/status';
 import { useRol } from '../../../shared/auth/auth-context';
 import { useSubirActaFisica } from '../hooks/use-actas';
+import { actasApi } from '../api/actas.api';
 import { Acta } from '../types';
 import { extraerTextoPdf } from '../utils/extraer-texto-pdf';
 import { QrActaModal } from './qr-acta-modal';
@@ -27,7 +28,23 @@ export function ActaCard({ acta }: { acta: Acta }) {
   const [mostrarQr, setMostrarQr] = useState(false);
   const [mostrarCrearAcuerdo, setMostrarCrearAcuerdo] = useState(false);
   const [expandida, setExpandida] = useState(false);
+  const [descargando, setDescargando] = useState(false);
   const { data: acuerdos, isLoading: cargandoAcuerdos, isError: errorAcuerdos } = useAcuerdosPorActa(expandida ? acta.id : '');
+
+  const descargarWord = async () => {
+    setDescargando(true);
+    try {
+      const blob = await actasApi.descargarWord(acta.id);
+      const url = URL.createObjectURL(blob);
+      const enlace = document.createElement('a');
+      enlace.href = url;
+      enlace.download = `acta-${acta.titulo.replace(/[^a-zA-Z0-9-_]+/g, '-').toLowerCase()}.docx`;
+      enlace.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDescargando(false);
+    }
+  };
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/70 bg-card shadow-card transition-all duration-200 hover:border-accent/50 hover:shadow-soft">
@@ -100,6 +117,19 @@ export function ActaCard({ acta }: { acta: Acta }) {
         className="flex shrink-0 items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary"
       >
         <QrCode className="size-3.5" />
+      </button>
+
+      <button
+        type="button"
+        title="Descargar Word"
+        disabled={descargando}
+        onClick={(event) => {
+          event.stopPropagation();
+          descargarWord();
+        }}
+        className="flex shrink-0 items-center justify-center rounded-lg border border-input bg-background p-2 text-foreground transition-colors hover:bg-secondary disabled:pointer-events-none disabled:opacity-50"
+      >
+        {descargando ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
       </button>
 
       {/* Acta física */}

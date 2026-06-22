@@ -9,7 +9,7 @@ import { rateLimit } from './middlewares/rate-limit.middleware';
 import { logger } from '../../shared/logger/logger';
 import { usuarioRoutes } from '../../modules/usuario/interfaces/http/usuario.routes';
 import { authRoutes } from '../../modules/usuario/interfaces/http/auth.routes';
-import { actaRoutes } from '../../modules/acta/interfaces/http/acta.routes';
+import { actaRoutes, onlyofficeCallbackRoutes } from '../../modules/acta/interfaces/http/acta.routes';
 import { acuerdoNestedRoutes, acuerdoRoutes } from '../../modules/acuerdo/interfaces/http/acuerdo.routes';
 import { asistenciaRoutes } from '../../modules/asistencia/interfaces/http/asistencia.routes';
 import { evidenciaRoutes } from '../../modules/evidencia/interfaces/http/evidencia.routes';
@@ -47,6 +47,7 @@ export function createServer(pool: Pool): Express {
   app.use('/api/v1/areas', areaRoutes(container.areaController));
   app.use('/api/v1/usuarios', usuarioRoutes(container.usuarioController, container.firmaUsuarioController));
   app.use('/api/v1/actas', actaRoutes(container.actaController));
+  app.use('/api/v1/onlyoffice', onlyofficeCallbackRoutes(container.actaController));
   app.use('/api/v1/actas/:actaId/acuerdos', acuerdoNestedRoutes(container.acuerdoController));
   app.use('/api/v1/acuerdos', acuerdoRoutes(container.acuerdoController));
   app.use('/api/v1/acuerdos/:id/evidencias', evidenciaRoutes(container.evidenciaController));
