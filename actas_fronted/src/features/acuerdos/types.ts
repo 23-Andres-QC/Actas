@@ -8,6 +8,7 @@ export interface Acuerdo {
   fechaFin: string;
   estadoSemaforo: 'verde' | 'amarillo' | 'rojo';
   porcentajeAvance: number;
+  tieneEvidencias: boolean;
 }
 
 export interface CrearAcuerdoInput {

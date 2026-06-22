@@ -10,6 +10,7 @@ export interface AcuerdoResponseDTO {
   fechaFin: string;
   estadoSemaforo: string;
   porcentajeAvance: number;
+  tieneEvidencias: boolean;
 }
 
 export interface CrearAcuerdoDTO {
@@ -20,7 +21,7 @@ export interface CrearAcuerdoDTO {
   fechaFin: string;
 }
 
-export function toAcuerdoResponseDTO(acuerdo: Acuerdo, responsableNombre?: string): AcuerdoResponseDTO {
+export function toAcuerdoResponseDTO(acuerdo: Acuerdo, responsableNombre?: string, tieneEvidencias = false): AcuerdoResponseDTO {
   return {
     id: acuerdo.id,
     actaId: acuerdo.actaId,
@@ -31,5 +32,6 @@ export function toAcuerdoResponseDTO(acuerdo: Acuerdo, responsableNombre?: strin
     fechaFin: acuerdo.fechaFin.toISOString(),
     estadoSemaforo: acuerdo.estadoSemaforo.value,
     porcentajeAvance: acuerdo.porcentajeAvance.value,
+    tieneEvidencias,
   };
 }

@@ -55,6 +55,19 @@ export class PostgresAcuerdoRepository implements AcuerdoRepository {
     return result.rows.map(toDomain);
   }
 
+  public async findTieneEvidenciasByActaId(actaId: string): Promise<Map<string, boolean>> {
+    const result = await this.pool.query<{ acuerdo_id: string }>(
+      `select distinct ac.acuerdo_id
+       from accion ac
+       join evidencia_accion ea on ea.accion_id = ac.id
+       where ac.acuerdo_id in (select id from acuerdo where acta_id = $1)`,
+      [actaId],
+    );
+    const conEvidencias = new Set(result.rows.map((r) => r.acuerdo_id));
+    const acuerdos = await this.findByActaId(actaId);
+    return new Map(acuerdos.map((a) => [a.id, conEvidencias.has(a.id)]));
+  }
+
   public async save(acuerdo: Acuerdo): Promise<void> {
     await this.pool.query(
       `insert into acuerdo (id, acta_id, responsable_id, descripcion, fecha_inicio, fecha_fin, estado_semaforo, porcentaje_avance)

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { X, Send, Loader2, Sparkles } from 'lucide-react';
+import { X, Send, Loader2, Sparkles, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Textarea } from '../../../components/ui/textarea';
 import type { Proceso, TipoReunion } from '../types';
@@ -22,6 +22,10 @@ export interface ActaAutocompletado {
   agenda?: string;
 }
 
+interface RespuestaIA extends ActaAutocompletado {
+  _camposFaltantes?: string[];
+}
+
 interface Mensaje {
   rol: 'usuario' | 'ia';
   texto: string;
@@ -37,7 +41,7 @@ function buildPrompt(areas: Area[], mensaje: string): string {
 Áreas disponibles:
 ${listaAreas}
 
-A partir de la descripción del usuario, extrae los campos que puedas identificar y devuelve SOLO un objeto JSON con esta estructura (omite los campos que no se mencionen):
+A partir de la descripción del usuario, extrae los campos que puedas identificar y devuelve SOLO un objeto JSON con esta estructura:
 {
   "titulo": "asunto o título de la reunión",
   "tipoReunion": "interna" o "externa",
@@ -48,15 +52,17 @@ A partir de la descripción del usuario, extrae los campos que puedas identifica
   "horaInicio": "HH:MM",
   "horaFin": "HH:MM",
   "objetivo": "objetivo de la reunión",
-  "agenda": "agenda o temas a tratar"
+  "agenda": "agenda o temas a tratar",
+  "_camposFaltantes": ["lista de campos requeridos que NO se mencionaron en la descripción, de entre: titulo, tipoReunion, proceso, areaId, lugar, fecha, horaInicio, horaFin, objetivo, agenda"]
 }
 
+Omite los campos que no se mencionen (excepto _camposFaltantes que siempre debe aparecer).
 Responde ÚNICAMENTE con el JSON, sin texto adicional, sin bloques de código markdown.
 
 Descripción: ${mensaje}`;
 }
 
-async function llamarGemini(areas: Area[], mensaje: string): Promise<ActaAutocompletado> {
+async function llamarGemini(areas: Area[], mensaje: string): Promise<RespuestaIA> {
   const body = {
     contents: [{ parts: [{ text: buildPrompt(areas, mensaje) }] }],
   };
@@ -75,7 +81,7 @@ async function llamarGemini(areas: Area[], mensaje: string): Promise<ActaAutocom
   const data = await res.json();
   const texto: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
   const limpio = texto.replace(/```json|```/g, '').trim();
-  return JSON.parse(limpio) as ActaAutocompletado;
+  return JSON.parse(limpio) as RespuestaIA;
 }
 
 interface Props {
@@ -86,12 +92,15 @@ interface Props {
 
 export function GeminiChat({ areas, onAutocompletar, onCerrar }: Props) {
   const [mensajes, setMensajes] = useState<Mensaje[]>([
-    { rol: 'ia', texto: '¡Hola! Descríbeme la reunión y autocompletaré el formulario. Por ejemplo: "reunión interna, proceso estratégico, área Gestión de Calidad, revisión de indicadores del trimestre, sala de juntas, mañana a las 10:00."' },
+    { rol: 'ia', texto: '¡Hola! Descríbeme la reunión y te mostraré una vista previa antes de llenar el formulario. Por ejemplo: "reunión interna, proceso estratégico, área Gestión de Calidad, revisión de indicadores del trimestre, sala de juntas, mañana a las 10:00."' },
   ]);
   const [input, setInput] = useState('');
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
+  const [datosEnEspera, setDatosEnEspera] = useState<RespuestaIA | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const scroll = () => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
   const enviar = async () => {
     const texto = input.trim();
@@ -99,16 +108,27 @@ export function GeminiChat({ areas, onAutocompletar, onCerrar }: Props) {
 
     setInput('');
     setError('');
+    setDatosEnEspera(null);
     setMensajes((prev) => [...prev, { rol: 'usuario', texto }]);
     setCargando(true);
 
     try {
       const datos = await llamarGemini(areas, texto);
-      const camposLlenados = Object.keys(datos).length;
+      const camposEncontrados = Object.keys(datos).filter((k) => k !== '_camposFaltantes');
+      const faltantes = datos._camposFaltantes ?? [];
 
-      onAutocompletar(datos);
+      if (camposEncontrados.length === 0) {
+        setMensajes((prev) => [
+          ...prev,
+          { rol: 'ia', texto: 'No pude extraer información suficiente. Intenta ser más específico, indicando tipo de reunión, área, asunto o fecha.' },
+        ]);
+        scroll();
+        return;
+      }
 
-      const resumen = [
+      setDatosEnEspera(datos);
+
+      const preview = [
         datos.titulo && `• Asunto: ${datos.titulo}`,
         datos.tipoReunion && `• Tipo: ${datos.tipoReunion}`,
         datos.proceso && `• Proceso: ${datos.proceso}`,
@@ -123,18 +143,36 @@ export function GeminiChat({ areas, onAutocompletar, onCerrar }: Props) {
         .filter(Boolean)
         .join('\n');
 
-      const respuesta =
-        camposLlenados > 0
-          ? `He autocompletado ${camposLlenados} campo(s) en el formulario:\n${resumen}\n\nRevisa los datos y ajusta lo que necesites.`
-          : 'No pude extraer información suficiente. Intenta ser más específico, por ejemplo indicando el tipo de reunión, área, asunto o fecha.';
+      const avisoFaltantes =
+        faltantes.length > 0
+          ? `\n\n⚠️ Campos que no mencionaste: ${faltantes.join(', ')}.`
+          : '';
 
-      setMensajes((prev) => [...prev, { rol: 'ia', texto: respuesta }]);
+      setMensajes((prev) => [
+        ...prev,
+        { rol: 'ia', texto: `Vista previa — ${camposEncontrados.length} campo(s) identificado(s):\n${preview}${avisoFaltantes}\n\n¿Confirmas que llene el formulario con estos datos?` },
+      ]);
     } catch {
       setError('No se pudo conectar con la IA. Verifica tu conexión e intenta de nuevo.');
     } finally {
       setCargando(false);
-      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      scroll();
     }
+  };
+
+  const confirmar = () => {
+    if (!datosEnEspera) return;
+    const { _camposFaltantes: _, ...datos } = datosEnEspera;
+    onAutocompletar(datos);
+    setDatosEnEspera(null);
+    setMensajes((prev) => [...prev, { rol: 'ia', texto: '¡Listo! He llenado el formulario. Revisa y ajusta lo que necesites.' }]);
+    scroll();
+  };
+
+  const cancelar = () => {
+    setDatosEnEspera(null);
+    setMensajes((prev) => [...prev, { rol: 'ia', texto: 'Entendido. Puedes describir la reunión de nuevo con más detalle.' }]);
+    scroll();
   };
 
   return (
@@ -173,6 +211,27 @@ export function GeminiChat({ areas, onAutocompletar, onCerrar }: Props) {
           </div>
         )}
         {error && <p className="text-center text-xs text-destructive">{error}</p>}
+
+        {/* Botones de confirmación */}
+        {datosEnEspera && !cargando && (
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={confirmar}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-success/10 px-3 py-2 text-xs font-semibold text-success transition-colors hover:bg-success hover:text-white"
+            >
+              <CheckCircle2 className="size-3.5" /> Confirmar y llenar
+            </button>
+            <button
+              type="button"
+              onClick={cancelar}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-muted px-3 py-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-secondary"
+            >
+              <XCircle className="size-3.5" /> Cancelar
+            </button>
+          </div>
+        )}
+
         <div ref={bottomRef} />
       </div>
 
