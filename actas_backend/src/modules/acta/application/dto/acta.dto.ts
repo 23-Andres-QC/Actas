@@ -4,6 +4,7 @@ export interface ActaResponseDTO {
   id: string;
   areaId: string;
   convocadorId: string;
+  convocadorNombre?: string;
   titulo: string;
   fecha: string;
   formato: string;
@@ -34,11 +35,12 @@ export interface CrearActaDTO {
   agenda: string;
 }
 
-export function toActaResponseDTO(acta: Acta): ActaResponseDTO {
+export function toActaResponseDTO(acta: Acta, convocadorNombre?: string): ActaResponseDTO {
   return {
     id: acta.id,
     areaId: acta.areaId,
     convocadorId: acta.convocadorId,
+    convocadorNombre,
     titulo: acta.titulo,
     fecha: acta.fecha.toISOString(),
     formato: acta.formato,

@@ -4,6 +4,7 @@ export interface AsistenteFirmadoInfo {
   usuarioId: string;
   nombre: string;
   email: string;
+  cargo: string | null;
   metodo: MetodoAsistencia;
   fechaHora: string;
   firmaUrl: string | null;

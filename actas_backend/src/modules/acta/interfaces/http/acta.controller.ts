@@ -5,6 +5,7 @@ import { ObtenerActaUseCase } from '../../application/use-cases/obtener-acta.use
 import { CalcularAvanceUseCase } from '../../application/use-cases/calcular-avance.use-case';
 import { ListarAcuerdosPorActaUseCase } from '../../../acuerdo/application/use-cases/listar-acuerdos-por-acta.use-case';
 import { SubirActaFisicaUseCase } from '../../application/use-cases/subir-acta-fisica.use-case';
+import { ListarAsistentesFirmadosUseCase } from '../../../asistencia/application/use-cases/listar-asistentes-firmados.use-case';
 import { crearActaSchema, listarActasQuerySchema } from './acta.validators';
 import { UnauthorizedError, ValidationError } from '../../../../shared/errors/domain-error';
 import { buildActaWordBuffer } from '../../infrastructure/acta-word.builder';
@@ -17,6 +18,7 @@ export class ActaController {
     private readonly calcularAvance: CalcularAvanceUseCase,
     private readonly listarAcuerdosPorActa: ListarAcuerdosPorActaUseCase,
     private readonly subirActaFisica: SubirActaFisicaUseCase,
+    private readonly listarAsistentesFirmados: ListarAsistentesFirmadosUseCase,
   ) {}
 
   public crear = async (req: Request, res: Response): Promise<void> => {
@@ -50,9 +52,12 @@ export class ActaController {
 
   public exportarWord = async (req: Request, res: Response): Promise<void> => {
     const actaId = req.params.id as string;
-    const acta = await this.obtenerActa.execute(actaId);
-    const acuerdos = await this.listarAcuerdosPorActa.execute(actaId);
-    const buffer = await buildActaWordBuffer(acta, acuerdos);
+    const [acta, acuerdos, asistentes] = await Promise.all([
+      this.obtenerActa.execute(actaId),
+      this.listarAcuerdosPorActa.execute(actaId),
+      this.listarAsistentesFirmados.execute(actaId),
+    ]);
+    const buffer = await buildActaWordBuffer(acta, acuerdos, asistentes);
 
     const nombreArchivo = `acta-${acta.titulo.replace(/[^a-zA-Z0-9-_]+/g, '-').toLowerCase()}.docx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');

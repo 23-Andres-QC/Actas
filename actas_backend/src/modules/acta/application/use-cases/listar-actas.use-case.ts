@@ -26,6 +26,6 @@ export class ListarActasUseCase {
     }
 
     const actas = await this.actaRepository.findAll({ areaId });
-    return actas.map(toActaResponseDTO);
+    return actas.map((acta) => toActaResponseDTO(acta));
   }
 }

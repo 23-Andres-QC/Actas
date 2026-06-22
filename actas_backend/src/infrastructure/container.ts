@@ -71,13 +71,15 @@ export function buildContainer(pool: Pool) {
   const avanceAcuerdosProvider = new PostgresAvanceAcuerdosProvider(pool);
   const acuerdoRepository = new PostgresAcuerdoRepository(pool);
   const storage = new SupabaseStorageAdapter();
+  const asistentesFirmadosProviderForActa = new PostgresAsistentesFirmadosProvider(pool);
   const actaController = new ActaController(
     new CrearActaUseCase(actaRepository),
     new ListarActasUseCase(actaRepository, usuarioRepository),
-    new ObtenerActaUseCase(actaRepository),
+    new ObtenerActaUseCase(actaRepository, usuarioRepository),
     new CalcularAvanceUseCase(actaRepository, avanceAcuerdosProvider),
     new ListarAcuerdosPorActaUseCase(acuerdoRepository, usuarioRepository),
     new SubirActaFisicaUseCase(actaRepository, storage),
+    new ListarAsistentesFirmadosUseCase(asistentesFirmadosProviderForActa),
   );
 
   const acuerdoController = new AcuerdoController(
